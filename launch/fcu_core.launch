@@ -1,0 +1,16 @@
+<launch>
+
+    <node pkg="fcu_core" type="fcu_bridge" name="fcu_bridge" output="screen" />
+    <node pkg="fcu_core" type="fcu_bridge_002" name="fcu_bridge_002" output="screen" />
+    <node pkg="fcu_core" type="fcu_bridge_003" name="fcu_bridge_003" output="screen" />
+
+    <node pkg="fcu_core" type="fcu_command" name="fcu_command" output="screen" />
+
+    <node pkg="fcu_core" type="fcu_mission" name="fcu_mission" output="screen" />
+
+    <arg name="rviz" default="true" />
+    <group if="$(arg rviz)">
+        <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find fcu_core)/rviz_cfg/fcu_core.rviz" />
+    </group>
+
+</launch>
