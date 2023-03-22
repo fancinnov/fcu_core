@@ -15,12 +15,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
+#include "fcu_bridge.h"
 #include "../mavlink/common/mavlink.h"
 
 #define DRONE_PORT 333 //port
 #define BUF_SIZE 1024
 
-static char* DRONE_IP = "192.168.0.202"; //ip
+static char* DRONE_IP = "192.168.1.202"; //ip
 static int socket_cli;
 static int get_drone;
 struct sockaddr_in drone_addr;
@@ -31,9 +33,24 @@ static mavlink_message_t msg_received;
 static mavlink_status_t status;
 static mavlink_scaled_imu_t imu;
 static mavlink_global_vision_position_estimate_t pose;
+static mavlink_global_position_int_t position;
+static mavlink_battery_status_t batt;
 static uint8_t buffer[BUF_SIZE];
 static uint8_t TxBuffer[BUF_SIZE];
+static uint8_t RxBuffer[BUF_SIZE];
 static uint8_t TxBuffer_buf[BUF_SIZE];
+static double time_start;
+
+ros::Publisher imu_global;
+ros::Publisher odom_global;
+ros::Subscriber odom;
+ros::Subscriber cmd;
+ros::Subscriber mission;
+ros::Publisher path_global;
+sensor_msgs::Imu imu_pub;
+nav_msgs::Odometry odom_pub;
+nav_msgs::Path path_pub;
+geometry_msgs::PoseStamped odomPose;
 
 typedef struct {
 	uint8_t* pBuff;
@@ -44,6 +61,7 @@ typedef struct {
 	uint8_t  flagOverflow; // set when buffer overflowed
 } RingBuffer;
 RingBuffer mav_buf_send;
+RingBuffer mav_buf_receive;
 
 //初始化RingBuffer
 void rbInit(RingBuffer* pRingBuff, uint8_t* buff, uint16_t length)
@@ -148,7 +166,7 @@ void mavlink_send_msg(mavlink_channel_t chan, mavlink_message_t *msg)
 void mav_send_heartbeat(void){
   mavlink_message_t msg_heartbeat;
   mavlink_heartbeat_t heartbeat;
-  heartbeat.type=MAV_TYPE_ONBOARD_CONTROLLER;
+  heartbeat.type=MAV_TYPE_GCS;
   heartbeat.autopilot=MAV_AUTOPILOT_INVALID;
   heartbeat.base_mode=MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
   mavlink_msg_heartbeat_encode(mavlink_system.sysid, mavlink_system.compid, &msg_heartbeat, &heartbeat);
@@ -213,6 +231,78 @@ void mav_send_target(float target_pos_x, float target_pos_y, float target_pos_z,
   mavlink_send_msg(mav_chan, &msg_position_target_local_ned);
 }
 
+void parse_data(void){
+	 int chan = 0;
+  uint16_t n=rbGetCount(&mav_buf_receive);
+	if(n){
+		// printf("Reading from serial port\n");
+		for(int i=0; i<n; i++){
+			if (mavlink_parse_char(chan,rbPop(&mav_buf_receive), &msg_received, &status)){
+					//printf("Received \n");
+					switch (msg_received.msgid) {
+						case MAVLINK_MSG_ID_HEARTBEAT:
+						printf("002 Received heartbeat time: %fs, voltage:%fV, current:%fA\n", ros::Time::now().toSec()-time_start, (double)batt.voltages[1]/1000, (double)batt.current_battery/100);
+							// mavlink_msg_heartbeat_decode(&msg_received, &heartbeat);
+							mav_send_heartbeat();
+							break;
+
+						case MAVLINK_MSG_ID_BATTERY_STATUS:
+							mavlink_msg_battery_status_decode(&msg_received, &batt);
+							break;
+
+						case MAVLINK_MSG_ID_SCALED_IMU:
+							mavlink_msg_scaled_imu_decode(&msg_received, &imu);
+							imu_pub.header.frame_id = "scaled_imu";
+							imu_pub.header.stamp = ros::Time::now();
+							imu_pub.linear_acceleration.x =(double)imu.xacc/1000;
+							imu_pub.linear_acceleration.y = -(double)imu.yacc/1000;
+							imu_pub.linear_acceleration.z = -(double)imu.zacc/1000;
+							imu_pub.angular_velocity.x = (double)imu.xgyro/1000;
+							imu_pub.angular_velocity.y = -(double)imu.ygyro/1000;
+							imu_pub.angular_velocity.z = -(double)imu.zgyro/1000;
+							imu_global.publish(imu_pub);
+							// printf("acc0,acc1,acc2,gyr0,gyr1,gyr2: %f %f %f %f %f %f\n",
+							//     (double)imu.xacc/1000,-(double)imu.yacc/1000,-(double)imu.zacc/1000,
+							//     (double)imu.xgyro/1000,-(double)imu.ygyro/1000,-(double)imu.zgyro/1000);
+							break;
+
+						case	MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+						 mavlink_msg_global_position_int_decode(&msg_received, &position);
+						 break;
+
+						case  MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE:
+							mavlink_msg_global_vision_position_estimate_decode(&msg_received, &pose);
+							odom_pub.header.frame_id = "map";
+							odom_pub.header.stamp = ros::Time::now();
+							float quaternion_odom[4];
+							mavlink_euler_to_quaternion(pose.roll, -pose.pitch, -pose.yaw, quaternion_odom);
+							odom_pub.pose.pose.orientation.w=quaternion_odom[0];
+							odom_pub.pose.pose.orientation.x=quaternion_odom[1];
+							odom_pub.pose.pose.orientation.y=quaternion_odom[2];
+							odom_pub.pose.pose.orientation.z=quaternion_odom[3];
+							odom_pub.pose.pose.position.x=pose.x*0.01;
+							odom_pub.pose.pose.position.y=-pose.y*0.01;
+							odom_pub.pose.pose.position.z=(float)position.relative_alt*0.001;
+
+							odomPose.header = odom_pub.header;
+							odomPose.pose = odom_pub.pose.pose;
+							path_pub.header.stamp = odom_pub.header.stamp;
+							path_pub.poses.push_back(odomPose);
+							path_pub.header.frame_id = "map";
+
+							odom_global.publish(odom_pub);
+							path_global.publish(path_pub);
+							break;
+
+						default:
+							// printf("msgid: %d\n", msg_received.msgid);
+							break;
+					}
+			}
+		}
+	}
+}
+
 void odomHandler(const nav_msgs::Odometry::ConstPtr& odom)
 {
   Eigen::Vector3f position_map ((float)odom->pose.pose.position.x, (float)odom->pose.pose.position.y, (float)odom->pose.pose.position.z) ;
@@ -242,9 +332,6 @@ void odomHandler(const nav_msgs::Odometry::ConstPtr& odom)
 
 void cmdHandler(const std_msgs::Int16::ConstPtr& cmd){
   switch(cmd->data){
-    case 0:
-        flush_data();
-        break;
     case 1:
         mav_send_arm();
         break;
@@ -291,23 +378,19 @@ int main(int argc, char **argv) {
 
   ros::init(argc, argv, "fcu_bridge_002");
   ros::NodeHandle nh;
-  int chan = 0;
-  mavlink_system.sysid=255;
+  mavlink_system.sysid=254;//强制飞控进入自主模式
   mavlink_system.compid=MAV_COMP_ID_MISSIONPLANNER;
 
   ros::Rate loop_rate(200);
-  ros::Publisher imu_global = nh.advertise<sensor_msgs::Imu>("imu_global",100);
-  ros::Publisher odom_global = nh.advertise<nav_msgs::Odometry>("odom_global_002",100);
-  ros::Subscriber odom=nh.subscribe<nav_msgs::Odometry>("/vins_estimator/odometry", 100, odomHandler);
-  ros::Subscriber cmd=nh.subscribe<std_msgs::Int16>("/fcu_bridge/command", 100, cmdHandler);
-  ros::Subscriber mission=nh.subscribe<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_002", 100, missionHandler);
-  ros::Publisher path_global = nh.advertise<nav_msgs::Path>("/path_global_002", 100);
-  sensor_msgs::Imu imu_pub;
-  nav_msgs::Odometry odom_pub;
-  nav_msgs::Path path_pub;
-  geometry_msgs::PoseStamped odomPose;
+  imu_global = nh.advertise<sensor_msgs::Imu>("imu_global",100);
+  odom_global = nh.advertise<nav_msgs::Odometry>("odom_global_002",100);
+  odom=nh.subscribe<nav_msgs::Odometry>("/vins_estimator/odometry", 100, odomHandler);
+  cmd=nh.subscribe<std_msgs::Int16>("/fcu_bridge/command", 100, cmdHandler);
+  mission=nh.subscribe<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_002", 100, missionHandler);
+  path_global = nh.advertise<nav_msgs::Path>("/path_global_002", 100);
 
   rbInit(&mav_buf_send, TxBuffer, BUF_SIZE);
+	rbInit(&mav_buf_receive, RxBuffer, BUF_SIZE);
 
   if(mav_chan==MAVLINK_COMM_0){
     try{
@@ -355,79 +438,46 @@ int main(int argc, char **argv) {
     }
   }
 
+	int flag = fcntl(socket_cli,F_GETFL,0);//获取socket_cli当前的状态
+	if(flag<0){
+		printf("fcntl F_GETFL fail");
+		close(socket_cli);
+		return -1;
+	}
+	fcntl(socket_cli, F_SETFL, flag | O_NONBLOCK);//设置为非阻塞态
+
+	time_start=ros::Time::now().toSec();
+
   int n=0;
   while (ros::ok()) {
     ros::spinOnce();
-    if(mav_chan==MAVLINK_COMM_0){
-      n=ser.available();
-      if(n){
-        //读出数据
-        ser.read(buffer, n);
-      }
-    }else{
-      n=recv(socket_cli, buffer, sizeof(buffer), 0);
-    }
-    if(n){
-      // printf("Reading from serial port\n");
-      for(int i=0; i<n; i++){
-        if (mavlink_parse_char(chan, buffer[i], &msg_received, &status)){
-            //printf("Received \n");
-            switch (msg_received.msgid) {
-              case MAVLINK_MSG_ID_HEARTBEAT:
-                printf("002 Received heartbeat time: %f\n", ros::Time::now().toSec());
-                // mavlink_msg_heartbeat_decode(&msg_received, &heartbeat);
-                mav_send_heartbeat();
-                break;
-
-              case MAVLINK_MSG_ID_SCALED_IMU:
-                mavlink_msg_scaled_imu_decode(&msg_received, &imu);
-                imu_pub.header.frame_id = "scaled_imu";
-                imu_pub.header.stamp = ros::Time::now();
-                imu_pub.linear_acceleration.x =(double)imu.xacc/1000;
-                imu_pub.linear_acceleration.y = -(double)imu.yacc/1000;
-                imu_pub.linear_acceleration.z = -(double)imu.zacc/1000;
-                imu_pub.angular_velocity.x = (double)imu.xgyro/1000;
-                imu_pub.angular_velocity.y = -(double)imu.ygyro/1000;
-                imu_pub.angular_velocity.z = -(double)imu.zgyro/1000;
-                imu_global.publish(imu_pub);
-                // printf("acc0,acc1,acc2,gyr0,gyr1,gyr2: %f %f %f %f %f %f\n",
-                //     (double)imu.xacc/1000,-(double)imu.yacc/1000,-(double)imu.zacc/1000,
-                //     (double)imu.xgyro/1000,-(double)imu.ygyro/1000,-(double)imu.zgyro/1000);
-                break;
-
-              case  MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE:
-                mavlink_msg_global_vision_position_estimate_decode(&msg_received, &pose);
-                odom_pub.header.frame_id = "map";
-                odom_pub.header.stamp = ros::Time::now();
-                float quaternion_odom[4];
-                mavlink_euler_to_quaternion(pose.roll, -pose.pitch, -pose.yaw, quaternion_odom);
-                odom_pub.pose.pose.orientation.w=quaternion_odom[0];
-                odom_pub.pose.pose.orientation.x=quaternion_odom[1];
-                odom_pub.pose.pose.orientation.y=quaternion_odom[2];
-                odom_pub.pose.pose.orientation.z=quaternion_odom[3];
-                odom_pub.pose.pose.position.x=pose.x*0.01;
-                odom_pub.pose.pose.position.y=-pose.y*0.01;
-                odom_pub.pose.pose.position.z=pose.z*0.01;
-                odom_global.publish(odom_pub);
-
-                odomPose.header = odom_pub.header;
-                odomPose.pose = odom_pub.pose.pose;
-                path_pub.header.stamp = odom_pub.header.stamp;
-                path_pub.poses.push_back(odomPose);
-                path_pub.header.frame_id = "map";
-                path_global.publish(path_pub);
-                break;
-
-              default:
-                // printf("msgid: %d\n", msg_received.msgid);
-                break;
-            }
-        }
-      }
-    }
+		if(!get_receive_lock()){
+			set_receive_lock(true);
+			if(mav_chan==MAVLINK_COMM_0){
+				n=ser.available();
+				if(n){
+					//读出数据
+					ser.read(buffer, n);
+				}
+			}else{
+				n=recv(socket_cli, buffer, sizeof(buffer), 0);
+			}
+			if(n>0){
+				for(uint16_t i=0; i<n; i++){
+					rbPush(&mav_buf_receive, buffer[i]);
+				}
+			}
+			set_receive_lock(false);
+		}
+		parse_data();
+		if(!get_send_lock()){
+			set_send_lock(true);
+			flush_data();
+			set_send_lock(false);
+		}
     loop_rate.sleep();
   }
   ser.close();
-
+	close(socket_cli);
   return 0;
 }

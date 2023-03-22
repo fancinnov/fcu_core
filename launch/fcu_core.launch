@@ -1,6 +1,6 @@
 <launch>
 
-    <node pkg="fcu_core" type="fcu_bridge" name="fcu_bridge" output="screen" />
+    <node pkg="fcu_core" type="fcu_bridge_001" name="fcu_bridge_001" output="screen" />
     <node pkg="fcu_core" type="fcu_bridge_002" name="fcu_bridge_002" output="screen" />
     <node pkg="fcu_core" type="fcu_bridge_003" name="fcu_bridge_003" output="screen" />
 

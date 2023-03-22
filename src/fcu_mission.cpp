@@ -6,8 +6,8 @@
 #include <std_msgs/Int16.h>
 
 static char buf[16] = {0};
-static std_msgs::Int16 cmd;
 static bool enable_track=false;
+static uint8_t enable_pos=0;
 
 void cmdHandler(const std_msgs::Int16::ConstPtr& cmd){
   switch(cmd->data){
@@ -16,6 +16,18 @@ void cmdHandler(const std_msgs::Int16::ConstPtr& cmd){
         break;
     case 6:
         enable_track=false;
+        break;
+    case 7:
+        enable_pos=1;
+        break;
+    case 8:
+        enable_pos=2;
+        break;
+    case 9:
+        enable_pos=3;
+        break;
+    case 10:
+        enable_pos=4;
         break;
     default:
         break;
@@ -33,9 +45,33 @@ void execute_mission_001(void){
   //demo圆形轨迹
   if(enable_track){
     theta+=M_PI/20/10;
+    px=0.8*cosf(theta)+1.2;
+    py=0.8*sinf(theta)-1.6;
+  }else{
+      switch(enable_pos){
+        case 1:
+            px=1.0;
+            py=-1.0;
+            break;
+        case 2:
+            px=2.0;
+            py=-1.0;
+            break;
+        case 3:
+            px=2.0;
+            py=-2.0;
+            break;
+        case 4:
+            px=1.0;
+            py=-2.0;
+            break;
+        default:
+            px=2.0f;
+            py=-1.6f;
+            theta=0.0f;
+            break;
+      }
   }
-  px=1.0*cosf(theta)+1.6;
-  py=1.0*sinf(theta)-1.6;
 
   //发布mission
   mission_001.header.frame_id = "mission_001";
@@ -61,8 +97,8 @@ void execute_mission_002(void){
   mission_002.header.frame_id = "mission_002";
   mission_002.header.stamp = ros::Time::now();
   mission_002.inertia.m=0.0f;
-  mission_002.inertia.com.x=1.0*cosf(theta+M_PI*2/3)+1.6;
-  mission_002.inertia.com.y=1.0*sinf(theta+M_PI*2/3)-1.6;
+  mission_002.inertia.com.x=0.8*cosf(theta+M_PI*2/3)+1.2;
+  mission_002.inertia.com.y=0.8*sinf(theta+M_PI*2/3)-1.6;
   mission_002.inertia.com.z=0.0f;
   mission_002.inertia.ixx=0.0f;
   mission_002.inertia.ixy=0.0f;
@@ -77,12 +113,12 @@ static geometry_msgs::InertiaStamped mission_003;
 static ros::Publisher mission_pub_003;
 void execute_mission_003(void){
   //demo圆形轨迹
-  //发布mission_002
+  //发布mission_003
   mission_003.header.frame_id = "mission_003";
   mission_003.header.stamp = ros::Time::now();
   mission_003.inertia.m=0.0f;
-  mission_003.inertia.com.x=1.0*cosf(theta+M_PI*2/3)+1.6;
-  mission_003.inertia.com.y=1.0*sinf(theta+M_PI*2/3)-1.6;
+  mission_003.inertia.com.x=0.8*cosf(theta+M_PI*4/3)+1.2;
+  mission_003.inertia.com.y=0.8*sinf(theta+M_PI*4/3)-1.6;
   mission_003.inertia.com.z=0.0f;
   mission_003.inertia.ixx=0.0f;
   mission_003.inertia.ixy=0.0f;
@@ -97,7 +133,6 @@ int main(int argc, char **argv) {
 
   ros::init(argc, argv, "fcu_mission");
   ros::NodeHandle nh;
-  ros::Publisher command = nh.advertise<std_msgs::Int16>("/fcu_bridge/command",100);
   ros::Subscriber comm=nh.subscribe<std_msgs::Int16>("/fcu_bridge/command", 100, cmdHandler);
 
   mission_pub_001 = nh.advertise<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_001",100);
@@ -111,10 +146,6 @@ int main(int argc, char **argv) {
     execute_mission_001();
     execute_mission_002();
     execute_mission_003();
-
-    //发送缓存区内的数据
-    cmd.data=0;
-    command.publish(cmd);
 
     loop_rate.sleep();
   }

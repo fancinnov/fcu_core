@@ -42,8 +42,8 @@ include_directories(
 	${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}})
 
-add_executable(fcu_bridge src/fcu_bridge.cpp)
-target_link_libraries(fcu_bridge ${catkin_LIBRARIES} )
+add_executable(fcu_bridge_001 src/fcu_bridge_001.cpp)
+target_link_libraries(fcu_bridge_001 ${catkin_LIBRARIES} )
 
 add_executable(fcu_command src/fcu_command.cpp)
 target_link_libraries(fcu_command ${catkin_LIBRARIES} )

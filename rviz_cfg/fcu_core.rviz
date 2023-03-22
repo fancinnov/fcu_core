@@ -62,6 +62,7 @@ Visualization Manager:
 
     - Class: rviz/Group
       Displays:
+
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
@@ -70,9 +71,9 @@ Visualization Manager:
           Head Diameter: 0.300000012
           Head Length: 0.200000003
           Length: 0.300000012
-          Line Style: Lines
-          Line Width: 0.100000001
-          Name: odomPath
+          Line Style: Billboards
+          Line Width: 0.1
+          Name: odomPath_001
           Offset:
             X: 0
             Y: 0
@@ -88,15 +89,84 @@ Visualization Manager:
         - Angle Tolerance: 0.1
           Class: rviz/Odometry
           Color: 221; 200; 14
-          Enabled: true
+          Enabled: false
           Keep: 100
           Length: 0.6
-          Name: Odometry
+          Name: Odometry_001
           Position Tolerance: 0.1
           Topic: odom_global_001
           Value: true
+
+        - Alpha: 1
+          Buffer Length: 1
+          Class: rviz/Path
+          Color: 0; 255; 0
+          Enabled: true
+          Head Diameter: 0.300000012
+          Head Length: 0.200000003
+          Length: 0.300000012
+          Line Style: Billboards
+          Line Width: 0.1
+          Name: odomPath_002
+          Offset:
+            X: 0
+            Y: 0
+            Z: 0
+          Pose Color: 255; 85; 255
+          Pose Style: None
+          Radius: 0.0299999993
+          Shaft Diameter: 0.100000001
+          Shaft Length: 0.100000001
+          Topic: path_global_002
+          Unreliable: false
+          Value: true
+        - Angle Tolerance: 0.1
+          Class: rviz/Odometry
+          Color: 221; 200; 14
+          Enabled: false
+          Keep: 100
+          Length: 0.6
+          Name: Odometry_002
+          Position Tolerance: 0.1
+          Topic: odom_global_002
+          Value: true
+
+        - Alpha: 1
+          Buffer Length: 1
+          Class: rviz/Path
+          Color: 0; 0; 255
+          Enabled: true
+          Head Diameter: 0.300000012
+          Head Length: 0.200000003
+          Length: 0.300000012
+          Line Style: Billboards
+          Line Width: 0.1
+          Name: odomPath_003
+          Offset:
+            X: 0
+            Y: 0
+            Z: 0
+          Pose Color: 255; 85; 255
+          Pose Style: None
+          Radius: 0.0299999993
+          Shaft Diameter: 0.100000001
+          Shaft Length: 0.100000001
+          Topic: path_global_003
+          Unreliable: false
+          Value: true
+        - Angle Tolerance: 0.1
+          Class: rviz/Odometry
+          Color: 221; 200; 14
+          Enabled: false
+          Keep: 100
+          Length: 0.6
+          Name: Odometry_003
+          Position Tolerance: 0.1
+          Topic: odom_global_003
+          Value: true
+
       Enabled: true
-      Name: path_001
+      Name: path
 
   Enabled: true
   Global Options:
