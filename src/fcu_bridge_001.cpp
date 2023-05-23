@@ -19,15 +19,17 @@
 #include "fcu_bridge.h"
 #include "../mavlink/common/mavlink.h"
 
+#define BUF_SIZE 1024//数据缓存区大小
+#define BAUDRATE 115200 //虚拟串口波特率
 #define DRONE_PORT 333 //port
-#define BUF_SIZE 1024
+static char* DRONE_IP = "192.168.0.201"; //ip
+static char* USB_PORT = "/dev/ttyACM0"; //usb虚拟串口文件描述符
+static mavlink_channel_t mav_chan=MAVLINK_COMM_1;//MAVLINK_COMM_0虚拟串口发送，MAVLINK_COMM_1网口发送
 
-static char* DRONE_IP = "192.168.1.201"; //ip
 static int socket_cli;
 static int get_drone;
 struct sockaddr_in drone_addr;
 static serial::Serial ser; //声明串口对象
-static mavlink_channel_t mav_chan=MAVLINK_COMM_1;//MAVLINK_COMM_0串口发送，MAVLINK_COMM_1网口发送
 static mavlink_system_t mavlink_system;
 static mavlink_message_t msg_received;
 static mavlink_status_t status;
@@ -39,7 +41,8 @@ static uint8_t buffer[BUF_SIZE];
 static uint8_t TxBuffer[BUF_SIZE];
 static uint8_t RxBuffer[BUF_SIZE];
 static uint8_t TxBuffer_buf[BUF_SIZE];
-static double time_start;
+static double time_start=0.0f;
+static double time_odom=0.0f;
 
 ros::Publisher imu_global;
 ros::Publisher odom_global;
@@ -52,82 +55,8 @@ nav_msgs::Odometry odom_pub;
 nav_msgs::Path path_pub;
 geometry_msgs::PoseStamped odomPose;
 
-typedef struct {
-	uint8_t* pBuff;
-	uint8_t* pEnd;  // pBuff + legnth
-	uint8_t* wp;    // Write Point
-	uint8_t* rp;    // Read Point
-	uint16_t length;
-	uint8_t  flagOverflow; // set when buffer overflowed
-} RingBuffer;
 RingBuffer mav_buf_send;
 RingBuffer mav_buf_receive;
-
-//初始化RingBuffer
-void rbInit(RingBuffer* pRingBuff, uint8_t* buff, uint16_t length)
-{
-	pRingBuff->pBuff = buff;
-	pRingBuff->pEnd  = buff + length;
-	pRingBuff->wp = buff;
-	pRingBuff->rp = buff;
-	pRingBuff->length = length;
-	pRingBuff->flagOverflow = 0;
-}
-
-//清空RingBuffer
-inline void rbClear(RingBuffer* pRingBuff)
-{
- 	pRingBuff->wp = pRingBuff->pBuff;
-	pRingBuff->rp = pRingBuff->pBuff;
-	pRingBuff->flagOverflow = 0;
-}
-
-//把一字节数据存进RingBuffer
-inline void rbPush(RingBuffer* pRingBuff, uint8_t value)
-{
-	uint8_t* wp_next = pRingBuff->wp + 1;
-	if( wp_next == pRingBuff->pEnd ) {
-		wp_next -= pRingBuff->length; // Rewind pointer when exceeds bound
-	}
-	if( wp_next != pRingBuff->rp ) {
-		*pRingBuff->wp = value;
-		pRingBuff->wp = wp_next;
-	} else {
-		pRingBuff->flagOverflow = 1;
-	}
-}
-
-//读取一个字节数据出来
-inline uint8_t rbPop(RingBuffer* pRingBuff)
-{
-	if( pRingBuff->rp == pRingBuff->wp )
-		return 0; // empty
-
-	uint8_t ret = *pRingBuff->rp;
-	pRingBuff->rp++;
-	if( pRingBuff->rp == pRingBuff->pEnd ) {
-		pRingBuff->rp -= pRingBuff->length; // Rewind pointer when exceeds bound
-	}
-	return ret;
-}
-
-//当前还有多少数据没被读取
-inline uint16_t rbGetCount(const RingBuffer* pRingBuff)
-{
-	return (pRingBuff->wp - pRingBuff->rp + pRingBuff->length) % pRingBuff->length;
-}
-
-//当前RingBuffer是不是空的
-inline int8_t rbIsEmpty(const RingBuffer* pRingBuff)
-{
-	return pRingBuff->wp == pRingBuff->rp;
-}
-
-//当前RingBuffer是不是满的
-inline int8_t rbIsFull(const RingBuffer* pRingBuff)
-{
- 	return (pRingBuff->rp - pRingBuff->wp + pRingBuff->length - 1) % pRingBuff->length == 0;
-}
 
 void flush_data(void){
 	uint16_t length=rbGetCount(&mav_buf_send);
@@ -305,6 +234,15 @@ void parse_data(void){
 
 void odomHandler(const nav_msgs::Odometry::ConstPtr& odom)
 {
+	if(time_odom<=time_start||mav_chan == MAVLINK_COMM_0){//USB传输无需降频
+		time_odom=ros::Time::now().toSec();
+	}else{
+		if(ros::Time::now().toSec()-time_odom<0.05){//用网络通信，如果odom频率过高进行降频，降至20hz以下
+			return;
+		}
+		time_odom=ros::Time::now().toSec();
+	}
+
   Eigen::Vector3f position_map ((float)odom->pose.pose.position.x, (float)odom->pose.pose.position.y, (float)odom->pose.pose.position.z) ;
   float quaternion_odom[4]={(float)odom->pose.pose.orientation.w,
                             (float)odom->pose.pose.orientation.x,
@@ -395,8 +333,8 @@ int main(int argc, char **argv) {
   if(mav_chan==MAVLINK_COMM_0){
     try{
     //设置串口属性，并打开串口
-        ser.setPort("/dev/ttyACM0");
-        ser.setBaudrate(115200);
+        ser.setPort(USB_PORT);
+        ser.setBaudrate(BAUDRATE);
         serial::Timeout to = serial::Timeout::simpleTimeout(5000);
         ser.setTimeout(to);
         ser.open();

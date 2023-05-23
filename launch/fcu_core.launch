@@ -3,6 +3,9 @@
     <node pkg="fcu_core" type="fcu_bridge_001" name="fcu_bridge_001" output="screen" />
     <node pkg="fcu_core" type="fcu_bridge_002" name="fcu_bridge_002" output="screen" />
     <node pkg="fcu_core" type="fcu_bridge_003" name="fcu_bridge_003" output="screen" />
+    <node pkg="fcu_core" type="fcu_bridge_004" name="fcu_bridge_004" output="screen" />
+    <node pkg="fcu_core" type="fcu_bridge_005" name="fcu_bridge_005" output="screen" />
+    <node pkg="fcu_core" type="fcu_bridge_006" name="fcu_bridge_006" output="screen" />
 
     <node pkg="fcu_core" type="fcu_command" name="fcu_command" output="screen" />
 

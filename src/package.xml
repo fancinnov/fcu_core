@@ -7,11 +7,11 @@
     This is an autonomous navigation project of aerial robot.
   </description>
 
-  <maintainer email="2505381597@qq.com">PJY</maintainer>
+  <maintainer email="jackypan@fancinnov.com">JackyPan</maintainer>
 
   <license>private</license>
 
-  <author email="2505381597@qq.com">PJY</author>
+  <author email="jackypan@fancinnov.com">JackyPan</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>geometry_msgs</build_depend>

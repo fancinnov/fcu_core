@@ -45,8 +45,8 @@ void execute_mission_001(void){
   //demo圆形轨迹
   if(enable_track){
     theta+=M_PI/20/10;
-    px=0.8*cosf(theta)+1.2;
-    py=0.8*sinf(theta)-1.6;
+    px=1.0*cosf(theta)+1.2;
+    py=1.0*sinf(theta)-1.6;
   }else{
       switch(enable_pos){
         case 1:
@@ -97,8 +97,8 @@ void execute_mission_002(void){
   mission_002.header.frame_id = "mission_002";
   mission_002.header.stamp = ros::Time::now();
   mission_002.inertia.m=0.0f;
-  mission_002.inertia.com.x=0.8*cosf(theta+M_PI*2/3)+1.2;
-  mission_002.inertia.com.y=0.8*sinf(theta+M_PI*2/3)-1.6;
+  mission_002.inertia.com.x=1.0*cosf(theta+M_PI*1/3)+1.2;
+  mission_002.inertia.com.y=1.0*sinf(theta+M_PI*1/3)-1.6;
   mission_002.inertia.com.z=0.0f;
   mission_002.inertia.ixx=0.0f;
   mission_002.inertia.ixy=0.0f;
@@ -117,8 +117,8 @@ void execute_mission_003(void){
   mission_003.header.frame_id = "mission_003";
   mission_003.header.stamp = ros::Time::now();
   mission_003.inertia.m=0.0f;
-  mission_003.inertia.com.x=0.8*cosf(theta+M_PI*4/3)+1.2;
-  mission_003.inertia.com.y=0.8*sinf(theta+M_PI*4/3)-1.6;
+  mission_003.inertia.com.x=1.0*cosf(theta+M_PI*2/3)+1.2;
+  mission_003.inertia.com.y=1.0*sinf(theta+M_PI*2/3)-1.6;
   mission_003.inertia.com.z=0.0f;
   mission_003.inertia.ixx=0.0f;
   mission_003.inertia.ixy=0.0f;
@@ -127,6 +127,66 @@ void execute_mission_003(void){
   mission_003.inertia.iyz=0.0f;
   mission_003.inertia.izz=0.0f;
   mission_pub_003.publish(mission_003);
+}
+
+static geometry_msgs::InertiaStamped mission_004;
+static ros::Publisher mission_pub_004;
+void execute_mission_004(void){
+  //demo圆形轨迹
+  //发布mission_004
+  mission_004.header.frame_id = "mission_004";
+  mission_004.header.stamp = ros::Time::now();
+  mission_004.inertia.m=0.0f;
+  mission_004.inertia.com.x=1.0*cosf(theta+M_PI)+1.2;
+  mission_004.inertia.com.y=1.0*sinf(theta+M_PI)-1.6;
+  mission_004.inertia.com.z=0.0f;
+  mission_004.inertia.ixx=0.0f;
+  mission_004.inertia.ixy=0.0f;
+  mission_004.inertia.ixz=0.0f;
+  mission_004.inertia.iyy=0.0f;
+  mission_004.inertia.iyz=0.0f;
+  mission_004.inertia.izz=0.0f;
+  mission_pub_004.publish(mission_004);
+}
+
+static geometry_msgs::InertiaStamped mission_005;
+static ros::Publisher mission_pub_005;
+void execute_mission_005(void){
+  //demo圆形轨迹
+  //发布mission_002
+  mission_005.header.frame_id = "mission_005";
+  mission_005.header.stamp = ros::Time::now();
+  mission_005.inertia.m=0.0f;
+  mission_005.inertia.com.x=1.0*cosf(theta+M_PI*4/3)+1.2;
+  mission_005.inertia.com.y=1.0*sinf(theta+M_PI*4/3)-1.6;
+  mission_005.inertia.com.z=0.0f;
+  mission_005.inertia.ixx=0.0f;
+  mission_005.inertia.ixy=0.0f;
+  mission_005.inertia.ixz=0.0f;
+  mission_005.inertia.iyy=0.0f;
+  mission_005.inertia.iyz=0.0f;
+  mission_005.inertia.izz=0.0f;
+  mission_pub_005.publish(mission_005);
+}
+
+static geometry_msgs::InertiaStamped mission_006;
+static ros::Publisher mission_pub_006;
+void execute_mission_006(void){
+  //demo圆形轨迹
+  //发布mission_006
+  mission_006.header.frame_id = "mission_006";
+  mission_006.header.stamp = ros::Time::now();
+  mission_006.inertia.m=0.0f;
+  mission_006.inertia.com.x=1.0*cosf(theta+M_PI*5/3)+1.2;
+  mission_006.inertia.com.y=1.0*sinf(theta+M_PI*5/3)-1.6;
+  mission_006.inertia.com.z=0.0f;
+  mission_006.inertia.ixx=0.0f;
+  mission_006.inertia.ixy=0.0f;
+  mission_006.inertia.ixz=0.0f;
+  mission_006.inertia.iyy=0.0f;
+  mission_006.inertia.iyz=0.0f;
+  mission_006.inertia.izz=0.0f;
+  mission_pub_006.publish(mission_006);
 }
 
 int main(int argc, char **argv) {
@@ -138,6 +198,9 @@ int main(int argc, char **argv) {
   mission_pub_001 = nh.advertise<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_001",100);
   mission_pub_002 = nh.advertise<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_002",100);
   mission_pub_003 = nh.advertise<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_003",100);
+  mission_pub_004 = nh.advertise<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_004",100);
+  mission_pub_005 = nh.advertise<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_005",100);
+  mission_pub_006 = nh.advertise<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_006",100);
 
   ros::Rate loop_rate(10);
   while (ros::ok()) {
@@ -146,6 +209,9 @@ int main(int argc, char **argv) {
     execute_mission_001();
     execute_mission_002();
     execute_mission_003();
+    execute_mission_004();
+    execute_mission_005();
+    execute_mission_006();
 
     loop_rate.sleep();
   }

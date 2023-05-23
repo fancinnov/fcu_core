@@ -4,7 +4,7 @@ Ubuntu 64-bit 18.04.
 ROS Melodic. [ROS Installation](http://wiki.ros.org/ROS/Installation)
 
 ### 1.2. **serial**
-sudo apt-get install ros-melodic-serial.
+sudo apt-get install ros-melodic-serial
 
 ### 1.3. **eigen**
 sudo apt-get install libeigen3-dev

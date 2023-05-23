@@ -22,7 +22,7 @@
 #define BUF_SIZE 1024//数据缓存区大小
 #define BAUDRATE 115200 //虚拟串口波特率
 #define DRONE_PORT 333 //port
-static char* DRONE_IP = "192.168.0.203"; //ip
+static char* DRONE_IP = "192.168.0.204"; //ip
 static char* USB_PORT = "/dev/ttyACM0"; //usb虚拟串口文件描述符
 static mavlink_channel_t mav_chan=MAVLINK_COMM_1;//MAVLINK_COMM_0虚拟串口发送，MAVLINK_COMM_1网口发送
 
@@ -170,7 +170,7 @@ void parse_data(void){
 					//printf("Received \n");
 					switch (msg_received.msgid) {
 						case MAVLINK_MSG_ID_HEARTBEAT:
-						printf("003 Received heartbeat time: %fs, voltage:%fV, current:%fA\n", ros::Time::now().toSec()-time_start, (double)batt.voltages[1]/1000, (double)batt.current_battery/100);
+						printf("004 Received heartbeat time: %fs, voltage:%fV, current:%fA\n", ros::Time::now().toSec()-time_start, (double)batt.voltages[1]/1000, (double)batt.current_battery/100);
 							// mavlink_msg_heartbeat_decode(&msg_received, &heartbeat);
 							mav_send_heartbeat();
 							break;
@@ -314,18 +314,18 @@ void missionHandler(const geometry_msgs::InertiaStamped::ConstPtr& mission){
 
 int main(int argc, char **argv) {
 
-  ros::init(argc, argv, "fcu_bridge_003");
+  ros::init(argc, argv, "fcu_bridge_001");
   ros::NodeHandle nh;
   mavlink_system.sysid=254;//强制飞控进入自主模式
   mavlink_system.compid=MAV_COMP_ID_MISSIONPLANNER;
 
   ros::Rate loop_rate(200);
   imu_global = nh.advertise<sensor_msgs::Imu>("imu_global",100);
-  odom_global = nh.advertise<nav_msgs::Odometry>("odom_global_003",100);
+  odom_global = nh.advertise<nav_msgs::Odometry>("odom_global_004",100);
   odom=nh.subscribe<nav_msgs::Odometry>("/vins_estimator/odometry", 100, odomHandler);
   cmd=nh.subscribe<std_msgs::Int16>("/fcu_bridge/command", 100, cmdHandler);
-  mission=nh.subscribe<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_003", 100, missionHandler);
-  path_global = nh.advertise<nav_msgs::Path>("/path_global_003", 100);
+  mission=nh.subscribe<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_004", 100, missionHandler);
+  path_global = nh.advertise<nav_msgs::Path>("/path_global_004", 100);
 
   rbInit(&mav_buf_send, TxBuffer, BUF_SIZE);
 	rbInit(&mav_buf_receive, RxBuffer, BUF_SIZE);
@@ -364,15 +364,15 @@ int main(int argc, char **argv) {
     drone_addr.sin_family      = AF_INET;
     drone_addr.sin_port        = htons(DRONE_PORT);
     drone_addr.sin_addr.s_addr = inet_addr(DRONE_IP);
-    printf("fcu_bridge 003 connecting...\n");
+    printf("fcu_bridge 004 connecting...\n");
 
     get_drone=connect(socket_cli, (struct sockaddr*)&drone_addr, sizeof(drone_addr));
 
     if(get_drone<0){
-      printf("fcu_bridge 003 connect error!\n");
+      printf("fcu_bridge 004 connect error!\n");
       return -1;
     }else{
-      printf("fcu_bridge 003 connect succeed!\n");
+      printf("fcu_bridge 004 connect succeed!\n");
     }
   }
 
@@ -386,20 +386,20 @@ int main(int argc, char **argv) {
 
 	time_start=ros::Time::now().toSec();
 
-	int n=0;
+  int n=0;
   while (ros::ok()) {
     ros::spinOnce();
 		if(!get_receive_lock()){
 			set_receive_lock(true);
 			if(mav_chan==MAVLINK_COMM_0){
-				n=ser.available();
-				if(n){
-					//读出数据
-					ser.read(buffer, n);
-				}
-			}else{
-				n=recv(socket_cli, buffer, sizeof(buffer), 0);
-			}
+	      n=ser.available();
+	      if(n){
+	        //读出数据
+	        ser.read(buffer, n);
+	      }
+	    }else{
+	      n=recv(socket_cli, buffer, sizeof(buffer), 0);
+	    }
 			if(n>0){
 				for(uint16_t i=0; i<n; i++){
 					rbPush(&mav_buf_receive, buffer[i]);
@@ -407,7 +407,7 @@ int main(int argc, char **argv) {
 			}
 			set_receive_lock(false);
 		}
-		parse_data();
+ 	  parse_data();
 		if(!get_send_lock()){
 			set_send_lock(true);
 			flush_data();
