@@ -22,7 +22,7 @@
 #define BUF_SIZE 1024//数据缓存区大小
 #define BAUDRATE 115200 //虚拟串口波特率
 #define DRONE_PORT 333 //port
-static char* DRONE_IP = "192.168.0.201"; //ip
+static char* DRONE_IP = "192.168.1.1"; //ip
 static char* USB_PORT = "/dev/ttyACM0"; //usb虚拟串口文件描述符
 static mavlink_channel_t mav_chan=MAVLINK_COMM_1;//MAVLINK_COMM_0虚拟串口发送，MAVLINK_COMM_1网口发送
 
@@ -37,6 +37,7 @@ static mavlink_scaled_imu_t imu;
 static mavlink_global_vision_position_estimate_t pose;
 static mavlink_global_position_int_t position;
 static mavlink_battery_status_t batt;
+static mavlink_attitude_quaternion_t attitude_quaternion;
 static uint8_t buffer[BUF_SIZE];
 static uint8_t TxBuffer[BUF_SIZE];
 static uint8_t RxBuffer[BUF_SIZE];
@@ -160,6 +161,21 @@ void mav_send_target(float target_pos_x, float target_pos_y, float target_pos_z,
   mavlink_send_msg(mav_chan, &msg_position_target_local_ned);
 }
 
+void mav_send_actuator_control(float control1, float control2, float control3, float control4, float control5, float control6, float control7, float control8 ){
+		mavlink_set_actuator_control_target_t set_actuator_control_target;
+	  mavlink_message_t msg_set_actuator_control_target;
+	  set_actuator_control_target.controls[0]=control1;
+	  set_actuator_control_target.controls[1]=control2;
+	  set_actuator_control_target.controls[2]=control3;
+	  set_actuator_control_target.controls[3]=control4;
+	  set_actuator_control_target.controls[4]=control5;
+	  set_actuator_control_target.controls[5]=control6;
+	  set_actuator_control_target.controls[6]=control7;
+		set_actuator_control_target.controls[7]=control8;
+	  mavlink_msg_set_actuator_control_target_encode(mavlink_system.sysid, mavlink_system.compid, &msg_set_actuator_control_target, &set_actuator_control_target);
+	  mavlink_send_msg(mav_chan, &msg_set_actuator_control_target);
+}
+
 void parse_data(void){
 	 int chan = 0;
   uint16_t n=rbGetCount(&mav_buf_receive);
@@ -197,6 +213,7 @@ void parse_data(void){
 
 						case	MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
 						 mavlink_msg_global_position_int_decode(&msg_received, &position);
+						 // printf("x:%d y:%d \n",position.lat,position.lon );
 						 break;
 
 						case  MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE:
@@ -212,7 +229,9 @@ void parse_data(void){
 							odom_pub.pose.pose.position.x=pose.x*0.01;
 							odom_pub.pose.pose.position.y=-pose.y*0.01;
 							odom_pub.pose.pose.position.z=(float)position.relative_alt*0.001;
-
+							if(position.lat==0||position.lon==0){
+								break;
+							}
 							odomPose.header = odom_pub.header;
 							odomPose.pose = odom_pub.pose.pose;
 							path_pub.header.stamp = odom_pub.header.stamp;
@@ -221,6 +240,13 @@ void parse_data(void){
 
 							odom_global.publish(odom_pub);
 							path_global.publish(path_pub);
+
+							break;
+
+						case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
+							mavlink_msg_attitude_quaternion_decode(&msg_received, &attitude_quaternion);
+							printf("q1,q2,q3,q4,g1,g2,g3: %f %f %f %f %f %f %f\n",attitude_quaternion.q1, attitude_quaternion.q2, attitude_quaternion.q3, attitude_quaternion.q4,
+																																																															attitude_quaternion.rollspeed, attitude_quaternion.pitchspeed, attitude_quaternion.yawspeed );
 							break;
 
 						default:

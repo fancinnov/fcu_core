@@ -50,14 +50,14 @@ Visualization Manager:
         Z: 0
       Plane: XY
       Plane Cell Count: 160
-      Reference Frame: <Fixed Frame>
+      Reference Frame: uwb
       Value: false
     - Class: rviz/Axes
       Enabled: true
       Length: 1
       Name: Axes
       Radius: 0.100000001
-      Reference Frame: <Fixed Frame>
+      Reference Frame: uwb
       Value: true
 
     - Class: rviz/Group

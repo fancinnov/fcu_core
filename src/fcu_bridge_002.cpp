@@ -212,7 +212,9 @@ void parse_data(void){
 							odom_pub.pose.pose.position.x=pose.x*0.01;
 							odom_pub.pose.pose.position.y=-pose.y*0.01;
 							odom_pub.pose.pose.position.z=(float)position.relative_alt*0.001;
-
+							if(position.lat==0||position.lon==0){
+								break;
+							}
 							odomPose.header = odom_pub.header;
 							odomPose.pose = odom_pub.pose.pose;
 							path_pub.header.stamp = odom_pub.header.stamp;
