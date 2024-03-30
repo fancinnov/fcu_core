@@ -14,17 +14,19 @@
 #include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include "fcu_bridge.h"
 #include "../mavlink/common/mavlink.h"
 
-#define BUF_SIZE 1024//数据缓存区大小
-#define BAUDRATE 115200 //虚拟串口波特率
+#define BUF_SIZE 102400//数据缓存区大小
+#define BAUDRATE 460800 //虚拟串口波特率
 #define DRONE_PORT 333 //port
-static char* DRONE_IP = "192.168.1.1"; //ip
+static char* DRONE_IP = "192.168.0.201"; //ip
 static char* USB_PORT = "/dev/ttyACM0"; //usb虚拟串口文件描述符
 static mavlink_channel_t mav_chan=MAVLINK_COMM_1;//MAVLINK_COMM_0虚拟串口发送，MAVLINK_COMM_1网口发送
+static bool offboard=false;
 
 static int socket_cli;
 static int get_drone;
@@ -96,7 +98,11 @@ void mavlink_send_msg(mavlink_channel_t chan, mavlink_message_t *msg)
 void mav_send_heartbeat(void){
   mavlink_message_t msg_heartbeat;
   mavlink_heartbeat_t heartbeat;
-  heartbeat.type=MAV_TYPE_GCS;
+	if(offboard){//串口
+		heartbeat.type=MAV_TYPE_ONBOARD_CONTROLLER;
+	}else{
+		heartbeat.type=MAV_TYPE_GCS;
+	}
   heartbeat.autopilot=MAV_AUTOPILOT_INVALID;
   heartbeat.base_mode=MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
   mavlink_msg_heartbeat_encode(mavlink_system.sysid, mavlink_system.compid, &msg_heartbeat, &heartbeat);
@@ -180,7 +186,7 @@ void parse_data(void){
 	 int chan = 0;
   uint16_t n=rbGetCount(&mav_buf_receive);
 	if(n){
-		// printf("Reading from serial port\n");
+		// printf("Reading from serial port:%d\n",n);
 		for(int i=0; i<n; i++){
 			if (mavlink_parse_char(chan,rbPop(&mav_buf_receive), &msg_received, &status)){
 					//printf("Received \n");
@@ -213,7 +219,6 @@ void parse_data(void){
 
 						case	MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
 						 mavlink_msg_global_position_int_decode(&msg_received, &position);
-						 // printf("x:%d y:%d \n",position.lat,position.lon );
 						 break;
 
 						case  MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE:
@@ -240,13 +245,16 @@ void parse_data(void){
 
 							odom_global.publish(odom_pub);
 							path_global.publish(path_pub);
-
 							break;
 
 						case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
 							mavlink_msg_attitude_quaternion_decode(&msg_received, &attitude_quaternion);
-							printf("q1,q2,q3,q4,g1,g2,g3: %f %f %f %f %f %f %f\n",attitude_quaternion.q1, attitude_quaternion.q2, attitude_quaternion.q3, attitude_quaternion.q4,
-																																																															attitude_quaternion.rollspeed, attitude_quaternion.pitchspeed, attitude_quaternion.yawspeed );
+							imu_pub.orientation.w=attitude_quaternion.q1;
+							imu_pub.orientation.x=attitude_quaternion.q2;
+							imu_pub.orientation.y=attitude_quaternion.q3;
+							imu_pub.orientation.z=attitude_quaternion.q4;
+							// printf("q1,q2,q3,q4,g1,g2,g3: %f %f %f %f %f %f %f\n",attitude_quaternion.q1, attitude_quaternion.q2, attitude_quaternion.q3, attitude_quaternion.q4,
+							// 																																																								attitude_quaternion.rollspeed, attitude_quaternion.pitchspeed, attitude_quaternion.yawspeed );
 							break;
 
 						default:
@@ -401,7 +409,8 @@ int main(int argc, char **argv) {
       printf("fcu_bridge 001 connect succeed!\n");
     }
   }
-
+  int tcp_delay=1;
+	setsockopt(socket_cli, IPPROTO_TCP, TCP_NODELAY, (void*)&tcp_delay, sizeof(tcp_delay));
 	int flag = fcntl(socket_cli,F_GETFL,0);//获取socket_cli当前的状态
 	if(flag<0){
 		printf("fcntl F_GETFL fail");

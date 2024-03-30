@@ -43,34 +43,76 @@ static float px=0.0f, py=0.0f, pz=0.0f;
 static float vx=0.0f, vy=0.0f, vz=0.0f;
 static float ax=0.0f, ay=0.0f, az=0.0f;
 static float theta=0.0f;
+
+static float px1=0.0f, py1=0.0f, px2=0.0f, py2=0.0f, px3=0.0f, py3=0.0f;
 void execute_mission_001(void){
   //demo圆形轨迹
   if(enable_track){
     theta+=M_PI/20/10;
-    px=0.8*cosf(theta)+1.6;
-    py=0.8*sinf(theta)+1.6;
+    px=1.0*cosf(theta)+2;
+    py=1.0*sinf(theta)+2;
   }else{
       switch(enable_pos){
         case 1:
             px=1.0;
             py=1.0;
+
+            px1=3.0f;
+            px2=2.0f;
+            px3=1.0f;
+            py1=2.0f;
+            py2=2.0f;
+            py3=2.0f;
+
             break;
         case 2:
             px=2.0;
             py=1.0;
+
+            px1=3.0f;
+            px2=2.0f;
+            px3=1.0f;
+            py1=1.0f;
+            py2=2.0f;
+            py3=3.0f;
+
             break;
         case 3:
             px=2.0;
             py=2.0;
+
+            px1=3.0f;
+            px2=2.0f;
+            px3=1.0f;
+            py1=3.0f;
+            py2=1.0f;
+            py3=3.0f;
+
             break;
         case 4:
             px=1.0;
             py=2.0;
+
+            px1=3.0f;
+            px2=2.0f;
+            px3=1.0f;
+            py1=1.0f;
+            py2=3.0f;
+            py3=1.0f;
+
             break;
         default:
-            px=2.4f;
-            py=1.6f;
+            px=3.0f;
+            py=2.0f;
             theta=0.0f;
+
+            px1=3.0f;
+            px2=2.0f;
+            px3=1.0f;
+            py1=2.0f;
+            py2=2.0f;
+            py3=2.0f;
+
             break;
       }
   }
@@ -99,8 +141,8 @@ void execute_mission_002(void){
   mission_002.header.frame_id = "mission_002";
   mission_002.header.stamp = ros::Time::now();
   mission_002.inertia.m=0.0f;
-  mission_002.inertia.com.x=0.8*cosf(theta+M_PI*1/3)+1.6;
-  mission_002.inertia.com.y=0.8*sinf(theta+M_PI*1/3)+1.6;
+  mission_002.inertia.com.x=1.0*cosf(theta+M_PI*1/3)+2;
+  mission_002.inertia.com.y=1.0*sinf(theta+M_PI*1/3)+2;
   mission_002.inertia.com.z=0.0f;
   mission_002.inertia.ixx=0.0f;
   mission_002.inertia.ixy=0.0f;
@@ -119,8 +161,8 @@ void execute_mission_003(void){
   mission_003.header.frame_id = "mission_003";
   mission_003.header.stamp = ros::Time::now();
   mission_003.inertia.m=0.0f;
-  mission_003.inertia.com.x=1.0*cosf(theta+M_PI*2/3)+2.4;
-  mission_003.inertia.com.y=1.0*sinf(theta+M_PI*2/3)+2.4;
+  mission_003.inertia.com.x=1.0*cosf(theta+M_PI*2/3)+2;
+  mission_003.inertia.com.y=1.0*sinf(theta+M_PI*2/3)+2;
   mission_003.inertia.com.z=0.0f;
   mission_003.inertia.ixx=0.0f;
   mission_003.inertia.ixy=0.0f;
@@ -139,8 +181,8 @@ void execute_mission_004(void){
   mission_004.header.frame_id = "mission_004";
   mission_004.header.stamp = ros::Time::now();
   mission_004.inertia.m=0.0f;
-  mission_004.inertia.com.x=1.0*cosf(theta+M_PI)+2.4;
-  mission_004.inertia.com.y=1.0*sinf(theta+M_PI)+2.4;
+  mission_004.inertia.com.x=1.0*cosf(theta+M_PI)+2;
+  mission_004.inertia.com.y=1.0*sinf(theta+M_PI)+2;
   mission_004.inertia.com.z=0.0f;
   mission_004.inertia.ixx=0.0f;
   mission_004.inertia.ixy=0.0f;
@@ -159,8 +201,8 @@ void execute_mission_005(void){
   mission_005.header.frame_id = "mission_005";
   mission_005.header.stamp = ros::Time::now();
   mission_005.inertia.m=0.0f;
-  mission_005.inertia.com.x=1.0*cosf(theta+M_PI*4/3)+2.4;
-  mission_005.inertia.com.y=1.0*sinf(theta+M_PI*4/3)+2.4;
+  mission_005.inertia.com.x=1.0*cosf(theta+M_PI*4/3)+2;
+  mission_005.inertia.com.y=1.0*sinf(theta+M_PI*4/3)+2;
   mission_005.inertia.com.z=0.0f;
   mission_005.inertia.ixx=0.0f;
   mission_005.inertia.ixy=0.0f;
@@ -179,8 +221,8 @@ void execute_mission_006(void){
   mission_006.header.frame_id = "mission_006";
   mission_006.header.stamp = ros::Time::now();
   mission_006.inertia.m=0.0f;
-  mission_006.inertia.com.x=1.0*cosf(theta+M_PI*5/3)+2.4;
-  mission_006.inertia.com.y=1.0*sinf(theta+M_PI*5/3)+2.4;
+  mission_006.inertia.com.x=1.0*cosf(theta+M_PI*5/3)+2;
+  mission_006.inertia.com.y=1.0*sinf(theta+M_PI*5/3)+2;
   mission_006.inertia.com.z=0.0f;
   mission_006.inertia.ixx=0.0f;
   mission_006.inertia.ixy=0.0f;

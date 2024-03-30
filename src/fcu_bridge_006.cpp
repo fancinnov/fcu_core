@@ -14,17 +14,19 @@
 #include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include "fcu_bridge.h"
 #include "../mavlink/common/mavlink.h"
 
-#define BUF_SIZE 1024//数据缓存区大小
-#define BAUDRATE 115200 //虚拟串口波特率
+#define BUF_SIZE 102400//数据缓存区大小
+#define BAUDRATE 460800 //虚拟串口波特率
 #define DRONE_PORT 333 //port
 static char* DRONE_IP = "192.168.0.206"; //ip
 static char* USB_PORT = "/dev/ttyACM0"; //usb虚拟串口文件描述符
 static mavlink_channel_t mav_chan=MAVLINK_COMM_1;//MAVLINK_COMM_0虚拟串口发送，MAVLINK_COMM_1网口发送
+static bool offboard=false;
 
 static int socket_cli;
 static int get_drone;
@@ -37,6 +39,7 @@ static mavlink_scaled_imu_t imu;
 static mavlink_global_vision_position_estimate_t pose;
 static mavlink_global_position_int_t position;
 static mavlink_battery_status_t batt;
+static mavlink_attitude_quaternion_t attitude_quaternion;
 static uint8_t buffer[BUF_SIZE];
 static uint8_t TxBuffer[BUF_SIZE];
 static uint8_t RxBuffer[BUF_SIZE];
@@ -95,7 +98,11 @@ void mavlink_send_msg(mavlink_channel_t chan, mavlink_message_t *msg)
 void mav_send_heartbeat(void){
   mavlink_message_t msg_heartbeat;
   mavlink_heartbeat_t heartbeat;
-  heartbeat.type=MAV_TYPE_GCS;
+	if(offboard){//串口
+		heartbeat.type=MAV_TYPE_ONBOARD_CONTROLLER;
+	}else{
+		heartbeat.type=MAV_TYPE_GCS;
+	}
   heartbeat.autopilot=MAV_AUTOPILOT_INVALID;
   heartbeat.base_mode=MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
   mavlink_msg_heartbeat_encode(mavlink_system.sysid, mavlink_system.compid, &msg_heartbeat, &heartbeat);
@@ -158,6 +165,21 @@ void mav_send_target(float target_pos_x, float target_pos_y, float target_pos_z,
   set_position_target_local_ned.yaw_rate=target_yaw_rate;
   mavlink_msg_set_position_target_local_ned_encode(mavlink_system.sysid, mavlink_system.compid, &msg_position_target_local_ned, &set_position_target_local_ned);
   mavlink_send_msg(mav_chan, &msg_position_target_local_ned);
+}
+
+void mav_send_actuator_control(float control1, float control2, float control3, float control4, float control5, float control6, float control7, float control8 ){
+		mavlink_set_actuator_control_target_t set_actuator_control_target;
+	  mavlink_message_t msg_set_actuator_control_target;
+	  set_actuator_control_target.controls[0]=control1;
+	  set_actuator_control_target.controls[1]=control2;
+	  set_actuator_control_target.controls[2]=control3;
+	  set_actuator_control_target.controls[3]=control4;
+	  set_actuator_control_target.controls[4]=control5;
+	  set_actuator_control_target.controls[5]=control6;
+	  set_actuator_control_target.controls[6]=control7;
+		set_actuator_control_target.controls[7]=control8;
+	  mavlink_msg_set_actuator_control_target_encode(mavlink_system.sysid, mavlink_system.compid, &msg_set_actuator_control_target, &set_actuator_control_target);
+	  mavlink_send_msg(mav_chan, &msg_set_actuator_control_target);
 }
 
 void parse_data(void){
@@ -223,6 +245,16 @@ void parse_data(void){
 
 							odom_global.publish(odom_pub);
 							path_global.publish(path_pub);
+							break;
+
+						case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
+							mavlink_msg_attitude_quaternion_decode(&msg_received, &attitude_quaternion);
+							imu_pub.orientation.w=attitude_quaternion.q1;
+							imu_pub.orientation.x=attitude_quaternion.q2;
+							imu_pub.orientation.y=attitude_quaternion.q3;
+							imu_pub.orientation.z=attitude_quaternion.q4;
+							// printf("q1,q2,q3,q4,g1,g2,g3: %f %f %f %f %f %f %f\n",attitude_quaternion.q1, attitude_quaternion.q2, attitude_quaternion.q3, attitude_quaternion.q4,
+							// 																																																								attitude_quaternion.rollspeed, attitude_quaternion.pitchspeed, attitude_quaternion.yawspeed );
 							break;
 
 						default:
@@ -377,7 +409,8 @@ int main(int argc, char **argv) {
       printf("fcu_bridge 006 connect succeed!\n");
     }
   }
-
+	int tcp_delay=1;
+	setsockopt(socket_cli, IPPROTO_TCP, TCP_NODELAY, (void*)&tcp_delay, sizeof(tcp_delay));
 	int flag = fcntl(socket_cli,F_GETFL,0);//获取socket_cli当前的状态
 	if(flag<0){
 		printf("fcntl F_GETFL fail");
