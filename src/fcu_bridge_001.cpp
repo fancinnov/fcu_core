@@ -354,7 +354,7 @@ int main(int argc, char **argv) {
   mavlink_system.compid=MAV_COMP_ID_MISSIONPLANNER;
 
   ros::Rate loop_rate(200);
-  imu_global = nh.advertise<sensor_msgs::Imu>("imu_global",100);
+  imu_global = nh.advertise<sensor_msgs::Imu>("imu_global_001",100);
   odom_global = nh.advertise<nav_msgs::Odometry>("odom_global_001",100);
   odom=nh.subscribe<nav_msgs::Odometry>("/vins_estimator/odometry", 100, odomHandler);
   cmd=nh.subscribe<std_msgs::Int16>("/fcu_bridge/command", 100, cmdHandler);
