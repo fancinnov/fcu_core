@@ -57,48 +57,36 @@ void execute_mission_001(void){
             px=1.0;
             py=1.0;
 
-            px1=3.0f;
-            px2=2.0f;
-            px3=1.0f;
-            py1=2.0f;
-            py2=2.0f;
-            py3=2.0f;
+            px1=2.5f; py1=2.0f;
+            px2=2.0f; py2=3.0f;
+            px3=2.0f; py3=1.0f;
 
             break;
         case 2:
             px=2.0;
             py=1.0;
 
-            px1=3.0f;
-            px2=2.0f;
-            px3=1.0f;
-            py1=1.0f;
-            py2=2.0f;
-            py3=3.0f;
+            px1=2.5f; py1=1.5f;
+            px2=2.0f; py2=3.0f;
+            px3=2.0f; py3=1.0f;
 
             break;
         case 3:
             px=2.0;
             py=2.0;
 
-            px1=3.0f;
-            px2=2.0f;
-            px3=1.0f;
-            py1=3.0f;
-            py2=1.0f;
-            py3=3.0f;
+            px1=2.5f; py1=1.5f;
+            px2=2.5f; py2=3.0f;
+            px3=2.0f; py3=1.0f;
 
             break;
         case 4:
             px=1.0;
             py=2.0;
 
-            px1=3.0f;
-            px2=2.0f;
-            px3=1.0f;
-            py1=1.0f;
-            py2=3.0f;
-            py3=1.0f;
+            px1=2.5f; py1=1.5f;
+            px2=2.5f; py2=2.5f;
+            px3=2.0f; py3=1.0f;
 
             break;
         default:
@@ -106,12 +94,9 @@ void execute_mission_001(void){
             py=2.0f;
             theta=0.0f;
 
-            px1=3.0f;
-            px2=2.0f;
-            px3=1.0f;
-            py1=2.0f;
-            py2=2.0f;
-            py3=2.0f;
+            px1=2.0f; py1=2.0f;
+            px2=2.0f; py2=3.0f;
+            px3=2.0f; py3=1.0f;
 
             break;
       }
@@ -120,7 +105,7 @@ void execute_mission_001(void){
   //发布mission
   mission_001.header.frame_id = "mission_001";
   mission_001.header.stamp = ros::Time::now();
-  mission_001.inertia.m=yaw;
+  mission_001.inertia.m=yaw;//rad
   mission_001.inertia.com.x=px;
   mission_001.inertia.com.y=py;
   mission_001.inertia.com.z=pz;
@@ -140,7 +125,7 @@ void execute_mission_002(void){
   //发布mission_002
   mission_002.header.frame_id = "mission_002";
   mission_002.header.stamp = ros::Time::now();
-  mission_002.inertia.m=0.0f;
+  mission_002.inertia.m=0.0f;//rad
   mission_002.inertia.com.x=1.0*cosf(theta+M_PI*1/3)+2;
   mission_002.inertia.com.y=1.0*sinf(theta+M_PI*1/3)+2;
   mission_002.inertia.com.z=0.0f;
@@ -160,7 +145,7 @@ void execute_mission_003(void){
   //发布mission_003
   mission_003.header.frame_id = "mission_003";
   mission_003.header.stamp = ros::Time::now();
-  mission_003.inertia.m=0.0f;
+  mission_003.inertia.m=0.0f;//rad
   mission_003.inertia.com.x=1.0*cosf(theta+M_PI*2/3)+2;
   mission_003.inertia.com.y=1.0*sinf(theta+M_PI*2/3)+2;
   mission_003.inertia.com.z=0.0f;
@@ -180,7 +165,7 @@ void execute_mission_004(void){
   //发布mission_004
   mission_004.header.frame_id = "mission_004";
   mission_004.header.stamp = ros::Time::now();
-  mission_004.inertia.m=0.0f;
+  mission_004.inertia.m=0.0f;//rad
   mission_004.inertia.com.x=1.0*cosf(theta+M_PI)+2;
   mission_004.inertia.com.y=1.0*sinf(theta+M_PI)+2;
   mission_004.inertia.com.z=0.0f;
@@ -197,10 +182,10 @@ static geometry_msgs::InertiaStamped mission_005;
 static ros::Publisher mission_pub_005;
 void execute_mission_005(void){
   //demo圆形轨迹
-  //发布mission_002
+  //发布mission_005
   mission_005.header.frame_id = "mission_005";
   mission_005.header.stamp = ros::Time::now();
-  mission_005.inertia.m=0.0f;
+  mission_005.inertia.m=0.0f;//rad
   mission_005.inertia.com.x=1.0*cosf(theta+M_PI*4/3)+2;
   mission_005.inertia.com.y=1.0*sinf(theta+M_PI*4/3)+2;
   mission_005.inertia.com.z=0.0f;
@@ -220,7 +205,7 @@ void execute_mission_006(void){
   //发布mission_006
   mission_006.header.frame_id = "mission_006";
   mission_006.header.stamp = ros::Time::now();
-  mission_006.inertia.m=0.0f;
+  mission_006.inertia.m=0.0f;//rad
   mission_006.inertia.com.x=1.0*cosf(theta+M_PI*5/3)+2;
   mission_006.inertia.com.y=1.0*sinf(theta+M_PI*5/3)+2;
   mission_006.inertia.com.z=0.0f;

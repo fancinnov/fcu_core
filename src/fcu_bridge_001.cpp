@@ -26,7 +26,8 @@
 static char* DRONE_IP = "192.168.0.201"; //ip
 static char* USB_PORT = "/dev/ttyACM0"; //usb虚拟串口文件描述符
 static mavlink_channel_t mav_chan=MAVLINK_COMM_1;//MAVLINK_COMM_0虚拟串口发送，MAVLINK_COMM_1网口发送
-static bool offboard=false;
+static bool offboard=false;//是否使用机载电脑
+static bool use_uwb=true;//是否使用UWB基站
 
 static int socket_cli;
 static int get_drone;
@@ -234,7 +235,7 @@ void parse_data(void){
 							odom_pub.pose.pose.position.x=pose.x*0.01;
 							odom_pub.pose.pose.position.y=-pose.y*0.01;
 							odom_pub.pose.pose.position.z=(float)position.relative_alt*0.001;
-							if(position.lat==0||position.lon==0){
+							if(use_uwb&&(position.lat==0||position.lon==0)){
 								break;
 							}
 							odomPose.header = odom_pub.header;
@@ -356,7 +357,7 @@ int main(int argc, char **argv) {
   ros::Rate loop_rate(200);
   imu_global = nh.advertise<sensor_msgs::Imu>("imu_global_001",100);
   odom_global = nh.advertise<nav_msgs::Odometry>("odom_global_001",100);
-  odom=nh.subscribe<nav_msgs::Odometry>("/vins_estimator/odometry", 100, odomHandler);
+  odom=nh.subscribe<nav_msgs::Odometry>("/vins_estimator/odometry_001", 100, odomHandler);
   cmd=nh.subscribe<std_msgs::Int16>("/fcu_bridge/command", 100, cmdHandler);
   mission=nh.subscribe<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_001", 100, missionHandler);
   path_global = nh.advertise<nav_msgs::Path>("/path_global_001", 100);
