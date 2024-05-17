@@ -234,7 +234,7 @@ void parse_data(void){
 							odom_pub.pose.pose.orientation.z=quaternion_odom[3];
 							odom_pub.pose.pose.position.x=pose.x*0.01;
 							odom_pub.pose.pose.position.y=-pose.y*0.01;
-							odom_pub.pose.pose.position.z=(float)position.relative_alt*0.001;
+							odom_pub.pose.pose.position.z=pose.z*0.01;
 							if(use_uwb&&(position.lat==0||position.lon==0)){
 								break;
 							}
