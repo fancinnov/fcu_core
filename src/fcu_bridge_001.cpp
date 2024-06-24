@@ -2,6 +2,7 @@
 #include <eigen3/Eigen/Dense>
 #include <serial/serial.h>
 #include <sensor_msgs/Imu.h>
+#include <sensor_msgs/NavSatFix.h>
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -20,7 +21,7 @@
 #include "fcu_bridge.h"
 #include "../mavlink/common/mavlink.h"
 
-#define BUF_SIZE 102400//数据缓存区大小
+#define BUF_SIZE 32768//数据缓存区大小
 #define BAUDRATE 460800 //虚拟串口波特率
 #define DRONE_PORT 333 //port
 static char* DRONE_IP = "192.168.0.201"; //ip
@@ -48,12 +49,14 @@ static uint8_t TxBuffer_buf[BUF_SIZE];
 static double time_start=0.0f;
 static double time_odom=0.0f;
 
+ros::Publisher gnss_global;
 ros::Publisher imu_global;
 ros::Publisher odom_global;
 ros::Subscriber odom;
 ros::Subscriber cmd;
 ros::Subscriber mission;
 ros::Publisher path_global;
+sensor_msgs::NavSatFix gnss_pub;
 sensor_msgs::Imu imu_pub;
 nav_msgs::Odometry odom_pub;
 nav_msgs::Path path_pub;
@@ -220,6 +223,12 @@ void parse_data(void){
 
 						case	MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
 						 mavlink_msg_global_position_int_decode(&msg_received, &position);
+             gnss_pub.header.frame_id = "gnss_global";
+						 gnss_pub.header.stamp = ros::Time::now();
+             gnss_pub.latitude = position.lat*1e-7;
+             gnss_pub.longitude = position.lon*1e-7;
+             gnss_pub.altitude = position.alt*1e-3;
+             gnss_global.publish(gnss_pub);
 						 break;
 
 						case  MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE:
@@ -355,6 +364,7 @@ int main(int argc, char **argv) {
   mavlink_system.compid=MAV_COMP_ID_MISSIONPLANNER;
 
   ros::Rate loop_rate(200);
+  gnss_global = nh.advertise<sensor_msgs::NavSatFix>("gnss_global_001",100);
   imu_global = nh.advertise<sensor_msgs::Imu>("imu_global_001",100);
   odom_global = nh.advertise<nav_msgs::Odometry>("odom_global_001",100);
   odom=nh.subscribe<nav_msgs::Odometry>("/vins_estimator/odometry_001", 100, odomHandler);
