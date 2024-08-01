@@ -57,7 +57,7 @@ Visualization Manager:
       Length: 1
       Name: Axes
       Radius: 0.100000001
-      Reference Frame: uwb
+      Reference Frame: map
       Value: true
 
     - Class: rviz/Group
@@ -274,7 +274,7 @@ Visualization Manager:
   Global Options:
     Background Color: 0; 0; 0
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: uwb
     Frame Rate: 30
   Name: root
   Tools:

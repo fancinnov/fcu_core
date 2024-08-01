@@ -126,8 +126,8 @@ void execute_mission_002(void){
   mission_002.header.frame_id = "mission_002";
   mission_002.header.stamp = ros::Time::now();
   mission_002.inertia.m=0.0f;//rad
-  mission_002.inertia.com.x=1.0*cosf(theta+M_PI*1/3)+2;
-  mission_002.inertia.com.y=1.0*sinf(theta+M_PI*1/3)+2;
+  mission_002.inertia.com.x=1.0*cosf(theta+M_PI*2/6)+2;
+  mission_002.inertia.com.y=1.0*sinf(theta+M_PI*2/6)+2;
   mission_002.inertia.com.z=0.0f;
   mission_002.inertia.ixx=0.0f;
   mission_002.inertia.ixy=0.0f;
@@ -146,8 +146,8 @@ void execute_mission_003(void){
   mission_003.header.frame_id = "mission_003";
   mission_003.header.stamp = ros::Time::now();
   mission_003.inertia.m=0.0f;//rad
-  mission_003.inertia.com.x=1.0*cosf(theta+M_PI*2/3)+2;
-  mission_003.inertia.com.y=1.0*sinf(theta+M_PI*2/3)+2;
+  mission_003.inertia.com.x=1.0*cosf(theta+M_PI*4/6)+2;
+  mission_003.inertia.com.y=1.0*sinf(theta+M_PI*4/6)+2;
   mission_003.inertia.com.z=0.0f;
   mission_003.inertia.ixx=0.0f;
   mission_003.inertia.ixy=0.0f;
@@ -166,8 +166,8 @@ void execute_mission_004(void){
   mission_004.header.frame_id = "mission_004";
   mission_004.header.stamp = ros::Time::now();
   mission_004.inertia.m=0.0f;//rad
-  mission_004.inertia.com.x=1.0*cosf(theta+M_PI)+2;
-  mission_004.inertia.com.y=1.0*sinf(theta+M_PI)+2;
+  mission_004.inertia.com.x=1.0*cosf(theta+M_PI*6/6)+2;
+  mission_004.inertia.com.y=1.0*sinf(theta+M_PI*6/6)+2;
   mission_004.inertia.com.z=0.0f;
   mission_004.inertia.ixx=0.0f;
   mission_004.inertia.ixy=0.0f;
@@ -186,8 +186,8 @@ void execute_mission_005(void){
   mission_005.header.frame_id = "mission_005";
   mission_005.header.stamp = ros::Time::now();
   mission_005.inertia.m=0.0f;//rad
-  mission_005.inertia.com.x=1.0*cosf(theta+M_PI*4/3)+2;
-  mission_005.inertia.com.y=1.0*sinf(theta+M_PI*4/3)+2;
+  mission_005.inertia.com.x=1.0*cosf(theta+M_PI*8/6)+2;
+  mission_005.inertia.com.y=1.0*sinf(theta+M_PI*8/6)+2;
   mission_005.inertia.com.z=0.0f;
   mission_005.inertia.ixx=0.0f;
   mission_005.inertia.ixy=0.0f;
@@ -206,8 +206,8 @@ void execute_mission_006(void){
   mission_006.header.frame_id = "mission_006";
   mission_006.header.stamp = ros::Time::now();
   mission_006.inertia.m=0.0f;//rad
-  mission_006.inertia.com.x=1.0*cosf(theta+M_PI*5/3)+2;
-  mission_006.inertia.com.y=1.0*sinf(theta+M_PI*5/3)+2;
+  mission_006.inertia.com.x=1.0*cosf(theta+M_PI*10/6)+2;
+  mission_006.inertia.com.y=1.0*sinf(theta+M_PI*10/6)+2;
   mission_006.inertia.com.z=0.0f;
   mission_006.inertia.ixx=0.0f;
   mission_006.inertia.ixy=0.0f;

@@ -236,14 +236,14 @@ void parse_data(void){
 							odom_pub.header.frame_id = "map";
 							odom_pub.header.stamp = ros::Time::now();
 							float quaternion_odom[4];
-							mavlink_euler_to_quaternion(pose.roll, -pose.pitch, -pose.yaw, quaternion_odom);
+							mavlink_euler_to_quaternion(pose.roll, pose.pitch, pose.yaw, quaternion_odom);
 							odom_pub.pose.pose.orientation.w=quaternion_odom[0];
 							odom_pub.pose.pose.orientation.x=quaternion_odom[1];
 							odom_pub.pose.pose.orientation.y=quaternion_odom[2];
 							odom_pub.pose.pose.orientation.z=quaternion_odom[3];
 							odom_pub.pose.pose.position.x=pose.x*0.01;
-							odom_pub.pose.pose.position.y=-pose.y*0.01;
-							odom_pub.pose.pose.position.z=pose.z*0.01;
+							odom_pub.pose.pose.position.y=pose.y*0.01;
+							odom_pub.pose.pose.position.z=-pose.z*0.01;
 							if(use_uwb&&(position.lat==0||position.lon==0)){
 								break;
 							}
