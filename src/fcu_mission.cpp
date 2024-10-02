@@ -99,53 +99,55 @@ void execute_mission_001(void){
   }else{
       switch(enable_pos){
         case 1:
-            px=0.0;
+            px=0.5;
             py=0.0;
-            pz=2.5;
+            pz=1.0;
 
-            px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pos_takeoff_001_z+pz;
-            px2=pos_takeoff_002_x+px; py2=pos_takeoff_002_y+py; pz2=pos_takeoff_002_z+pz;
-            px3=pos_takeoff_003_x+px; py3=pos_takeoff_003_y+py; pz3=pos_takeoff_003_z+pz;
-            px4=pos_takeoff_004_x+px; py4=pos_takeoff_004_y+py; pz4=pos_takeoff_004_z+pz;
-            px5=pos_takeoff_005_x+px; py5=pos_takeoff_005_y+py; pz5=pos_takeoff_005_z+pz;
-            px6=pos_takeoff_006_x+px; py6=pos_takeoff_006_y+py; pz6=pos_takeoff_006_z+pz;
+            px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pz;
+            px2=pos_takeoff_002_x+px; py2=pos_takeoff_002_y+py; pz2=pz;
+            px3=pos_takeoff_003_x+px; py3=pos_takeoff_003_y+py; pz3=pz;
+            px4=pos_takeoff_004_x+px; py4=pos_takeoff_004_y+py; pz4=pz;
+            px5=pos_takeoff_005_x+px; py5=pos_takeoff_005_y+py; pz5=pz;
+            px6=pos_takeoff_006_x+px; py6=pos_takeoff_006_y+py; pz6=pz;
 
             break;
         case 2:
-            px=0.0;
-            py=-2.5;
-            pz=2.5;
+            px=0.5;
+            py=0.5;
+            pz=1.0;
 
-            px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pos_takeoff_001_z+pz;
-            px2=pos_takeoff_002_x+px; py2=pos_takeoff_002_y+py; pz2=pos_takeoff_002_z+pz;
-            px3=pos_takeoff_003_x+px; py3=pos_takeoff_003_y+py; pz3=pos_takeoff_003_z+pz;
-            px4=pos_takeoff_004_x+px; py4=pos_takeoff_004_y+py; pz4=pos_takeoff_004_z+pz;
-            px5=pos_takeoff_005_x+px; py5=pos_takeoff_005_y+py; pz5=pos_takeoff_005_z+pz;
-            px6=pos_takeoff_006_x+px; py6=pos_takeoff_006_y+py; pz6=pos_takeoff_006_z+pz;
+            px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pz;
+            px2=pos_takeoff_002_x+px; py2=pos_takeoff_002_y+py; pz2=pz;
+            px3=pos_takeoff_003_x+px; py3=pos_takeoff_003_y+py; pz3=pz;
+            px4=pos_takeoff_004_x+px; py4=pos_takeoff_004_y+py; pz4=pz;
+            px5=pos_takeoff_005_x+px; py5=pos_takeoff_005_y+py; pz5=pz;
+            px6=pos_takeoff_006_x+px; py6=pos_takeoff_006_y+py; pz6=pz;
 
             break;
         case 3:
-            px=2.0;
-            py=2.0;
+            px=0.0;
+            py=0.5;
+            pz=1.0;
 
-            px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pos_takeoff_001_z+pz;
-            px2=pos_takeoff_002_x+px; py2=pos_takeoff_002_y+py; pz2=pos_takeoff_002_z+pz;
-            px3=pos_takeoff_003_x+px; py3=pos_takeoff_003_y+py; pz3=pos_takeoff_003_z+pz;
-            px4=pos_takeoff_004_x+px; py4=pos_takeoff_004_y+py; pz4=pos_takeoff_004_z+pz;
-            px5=pos_takeoff_005_x+px; py5=pos_takeoff_005_y+py; pz5=pos_takeoff_005_z+pz;
-            px6=pos_takeoff_006_x+px; py6=pos_takeoff_006_y+py; pz6=pos_takeoff_006_z+pz;
+            px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pz;
+            px2=pos_takeoff_002_x+px; py2=pos_takeoff_002_y+py; pz2=pz;
+            px3=pos_takeoff_003_x+px; py3=pos_takeoff_003_y+py; pz3=pz;
+            px4=pos_takeoff_004_x+px; py4=pos_takeoff_004_y+py; pz4=pz;
+            px5=pos_takeoff_005_x+px; py5=pos_takeoff_005_y+py; pz5=pz;
+            px6=pos_takeoff_006_x+px; py6=pos_takeoff_006_y+py; pz6=pz;
 
             break;
         case 4:
-            px=1.0;
-            py=2.0;
+            px=0.0;
+            py=0.0;
+            pz=0.5;
 
-            px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pos_takeoff_001_z+pz;
-            px2=pos_takeoff_002_x+px; py2=pos_takeoff_002_y+py; pz2=pos_takeoff_002_z+pz;
-            px3=pos_takeoff_003_x+px; py3=pos_takeoff_003_y+py; pz3=pos_takeoff_003_z+pz;
-            px4=pos_takeoff_004_x+px; py4=pos_takeoff_004_y+py; pz4=pos_takeoff_004_z+pz;
-            px5=pos_takeoff_005_x+px; py5=pos_takeoff_005_y+py; pz5=pos_takeoff_005_z+pz;
-            px6=pos_takeoff_006_x+px; py6=pos_takeoff_006_y+py; pz6=pos_takeoff_006_z+pz;
+            px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pz;
+            px2=pos_takeoff_002_x+px; py2=pos_takeoff_002_y+py; pz2=pz;
+            px3=pos_takeoff_003_x+px; py3=pos_takeoff_003_y+py; pz3=pz;
+            px4=pos_takeoff_004_x+px; py4=pos_takeoff_004_y+py; pz4=pz;
+            px5=pos_takeoff_005_x+px; py5=pos_takeoff_005_y+py; pz5=pz;
+            px6=pos_takeoff_006_x+px; py6=pos_takeoff_006_y+py; pz6=pz;
 
             break;
         default:
