@@ -7,6 +7,7 @@
 #include <std_msgs/Int16.h>
 #include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
+#include "quadrotor_msgs/PositionCommand.h"
 
 static char buf[16] = {0};
 static bool enable_track=false;
@@ -99,7 +100,7 @@ void execute_mission_001(void){
   }else{
       switch(enable_pos){
         case 1:
-            px=0.5;
+            px=0.0;
             py=0.0;
             pz=1.0;
 
@@ -113,7 +114,7 @@ void execute_mission_001(void){
             break;
         case 2:
             px=0.5;
-            py=0.5;
+            py=0.0;
             pz=1.0;
 
             px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pz;
@@ -125,9 +126,9 @@ void execute_mission_001(void){
 
             break;
         case 3:
-            px=0.0;
-            py=0.5;
-            pz=1.0;
+            px=2.0;
+            py=2.0;
+            pz=0.5;
 
             px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pz;
             px2=pos_takeoff_002_x+px; py2=pos_takeoff_002_y+py; pz2=pz;
@@ -139,8 +140,8 @@ void execute_mission_001(void){
             break;
         case 4:
             px=0.0;
-            py=0.0;
-            pz=0.5;
+            py=0.5;
+            pz=1.0;
 
             px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pz;
             px2=pos_takeoff_002_x+px; py2=pos_takeoff_002_y+py; pz2=pz;
@@ -319,6 +320,26 @@ void odom_global006_handler(const nav_msgs::Odometry::ConstPtr& odom)
   pos_odom_006_z=-(float)odom->pose.pose.position.z;
 }
 
+static bool get_pos_cmd=false;
+void pos_cmd_handler(const quadrotor_msgs::PositionCommand::ConstPtr& pose_plan)//仅机载电脑运行此函数
+{
+  //发布mission
+  get_pos_cmd=true;
+  mission_001.header.frame_id = "mission_001";
+  mission_001.header.stamp = ros::Time::now();
+  mission_001.inertia.m=-pose_plan->yaw;//rad
+  mission_001.inertia.com.x=pose_plan->position.x;
+  mission_001.inertia.com.y=-pose_plan->position.y;
+  mission_001.inertia.com.z=pose_plan->position.z;
+  mission_001.inertia.ixx=pose_plan->velocity.x;
+  mission_001.inertia.ixy=-pose_plan->velocity.y;
+  mission_001.inertia.ixz=pose_plan->velocity.z;
+  mission_001.inertia.iyy=pose_plan->acceleration.x;
+  mission_001.inertia.iyz=-pose_plan->acceleration.y;
+  mission_001.inertia.izz=pose_plan->acceleration.z;
+  mission_pub_001.publish(mission_001);
+}
+
 int main(int argc, char **argv) {
 
   ros::init(argc, argv, "fcu_mission");
@@ -330,6 +351,7 @@ int main(int argc, char **argv) {
   ros::Subscriber odom004=nh.subscribe<nav_msgs::Odometry>("odom_global_004", 100, odom_global004_handler);
   ros::Subscriber odom005=nh.subscribe<nav_msgs::Odometry>("odom_global_005", 100, odom_global005_handler);
   ros::Subscriber odom006=nh.subscribe<nav_msgs::Odometry>("odom_global_006", 100, odom_global006_handler);
+  ros::Subscriber pos_cmd=nh.subscribe<quadrotor_msgs::PositionCommand>("planning/pos_cmd", 100, pos_cmd_handler);
 
   mission_pub_001 = nh.advertise<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_001",100);
   mission_pub_002 = nh.advertise<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_002",100);
@@ -348,12 +370,14 @@ int main(int argc, char **argv) {
     q.setRPY(M_PI, 0, 0);
     transform.setRotation(q);
     br.sendTransform(tf::StampedTransform(transform,  ros::Time::now(), "map", "uwb"));
-    execute_mission_001();
-    execute_mission_002();
-    execute_mission_003();
-    execute_mission_004();
-    execute_mission_005();
-    execute_mission_006();
+    if(!get_pos_cmd){
+      execute_mission_001();
+      execute_mission_002();
+      execute_mission_003();
+      execute_mission_004();
+      execute_mission_005();
+      execute_mission_006();
+    }
 
     loop_rate.sleep();
   }

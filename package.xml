@@ -26,7 +26,9 @@
   <build_depend>serial</build_depend>
   <build_depend>octomap</build_depend>
   <build_depend>message_generation</build_depend>
+  <build_depend>quadrotor_msgs</build_depend>
 
+  <run_depend>quadrotor_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>nav_msgs</run_depend>

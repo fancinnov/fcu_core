@@ -29,6 +29,8 @@ static char* USB_PORT = "/dev/ttyACM0"; //usb虚拟串口文件描述符
 static mavlink_channel_t mav_chan=MAVLINK_COMM_1;//MAVLINK_COMM_0虚拟串口发送，MAVLINK_COMM_1网口发送
 static bool offboard=false;//是否使用机载电脑
 static bool use_uwb=true;//是否使用UWB基站
+static bool set_goal=false;//远程电脑用于设置轨迹规划的目标，机载电脑应为false
+static bool simple_target=true;//仅机载电脑配置：是否为简单目标点,simple_target表示目标只有位置，没有速度和加速度
 
 static int socket_cli;
 static int get_drone;
@@ -42,6 +44,7 @@ static mavlink_global_vision_position_estimate_t pose;
 static mavlink_global_position_int_t position;
 static mavlink_battery_status_t batt;
 static mavlink_attitude_quaternion_t attitude_quaternion;
+static mavlink_set_position_target_local_ned_t set_position_target;
 static uint8_t buffer[BUF_SIZE];
 static uint8_t TxBuffer[BUF_SIZE];
 static uint8_t RxBuffer[BUF_SIZE];
@@ -56,11 +59,14 @@ ros::Subscriber odom;
 ros::Subscriber cmd;
 ros::Subscriber mission;
 ros::Publisher path_global;
+ros::Publisher goal;
+
 sensor_msgs::NavSatFix gnss_pub;
 sensor_msgs::Imu imu_pub;
 nav_msgs::Odometry odom_pub;
 nav_msgs::Path path_pub;
 geometry_msgs::PoseStamped odomPose;
+geometry_msgs::PoseStamped goal_pub;
 
 RingBuffer mav_buf_send;
 RingBuffer mav_buf_receive;
@@ -150,12 +156,37 @@ void mav_send_land(void){
 }
 
 //设置目标。注意：这里输入的目标都是全局坐标系下的目标值
+static mavlink_set_position_target_local_ned_t set_position_target_local_ned;
+static mavlink_message_t msg_position_target_local_ned;
 void mav_send_target(float target_pos_x, float target_pos_y, float target_pos_z, //单位：m
                     float target_vel_x, float target_vel_y, float target_vel_z,  //单位：m/s
                     float target_acc_x, float target_acc_y, float target_acc_z,  //单位：m/ss
                     float target_yaw, float target_yaw_rate){                    //单位：rad, rad/s
-  mavlink_set_position_target_local_ned_t set_position_target_local_ned;
-  mavlink_message_t msg_position_target_local_ned;
+  if(set_goal){
+    if(fabs(set_position_target_local_ned.x-target_pos_x)<0.1&&
+       fabs(set_position_target_local_ned.y-target_pos_y)<0.1){
+        return;
+    }
+    if(target_pos_z!=0.0f){
+      set_position_target_local_ned.coordinate_frame=MAV_FRAME_MISSION;
+      printf("set_goal\n");
+    }else{//只有起飞时刻target_pos_z==0.0f
+      set_position_target_local_ned.coordinate_frame=MAV_FRAME_GLOBAL;
+      printf("init_goal\n");
+    }
+  }else{
+    if(offboard){
+      if(fabs(set_position_target_local_ned.x-target_pos_x)<0.001&&
+         fabs(set_position_target_local_ned.y-target_pos_y)<0.001){
+        return;
+      }
+    }
+    if(simple_target){
+      set_position_target_local_ned.coordinate_frame=MAV_FRAME_GLOBAL;
+    }else{
+      set_position_target_local_ned.coordinate_frame=MAV_FRAME_VISION_NED;
+    }
+  }
   set_position_target_local_ned.x=target_pos_x;
   set_position_target_local_ned.y=target_pos_y;
   set_position_target_local_ned.z=target_pos_z;
@@ -256,6 +287,18 @@ void parse_data(void){
 							odom_global.publish(odom_pub);
 							path_global.publish(path_pub);
 							break;
+
+            case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED://仅机载电脑接收该数据包
+              mavlink_msg_set_position_target_local_ned_decode(&msg_received, &set_position_target);
+              if(set_position_target.coordinate_frame==MAV_FRAME_MISSION){//设置自主飞行的goal point,把前右上坐标转换为前左上
+                goal_pub.header.frame_id = "map";
+                goal_pub.header.stamp = ros::Time::now();
+                goal_pub.pose.position.x=set_position_target.x;
+                goal_pub.pose.position.y=-set_position_target.y;
+                goal_pub.pose.position.z=set_position_target.z;
+                goal.publish(goal_pub);
+              }
+              break;
 
 						case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
 							mavlink_msg_attitude_quaternion_decode(&msg_received, &attitude_quaternion);
@@ -371,6 +414,7 @@ int main(int argc, char **argv) {
   cmd=nh.subscribe<std_msgs::Int16>("/fcu_bridge/command", 100, cmdHandler);
   mission=nh.subscribe<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_001", 100, missionHandler);
   path_global = nh.advertise<nav_msgs::Path>("/path_global_001", 100);
+  goal=nh.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 100);
 
   rbInit(&mav_buf_send, TxBuffer, BUF_SIZE);
 	rbInit(&mav_buf_receive, RxBuffer, BUF_SIZE);

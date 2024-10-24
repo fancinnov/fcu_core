@@ -10,6 +10,8 @@ sudo apt-get install ros-noetic-serial
 sudo apt-get install libeigen3-dev
 
 ## 2. Build
+在工作空间的src文件夹中：git clone https://github.com/fancinnov/quadrotor_msgs.git 
+                或者  git clone https://gitee.com/fancinnov/quadrotor_msgs.git
 在工作空间：catkin_make
 
 ## 3. Source

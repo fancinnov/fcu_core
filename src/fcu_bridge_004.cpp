@@ -29,6 +29,8 @@ static char* USB_PORT = "/dev/ttyACM0"; //usb虚拟串口文件描述符
 static mavlink_channel_t mav_chan=MAVLINK_COMM_1;//MAVLINK_COMM_0虚拟串口发送，MAVLINK_COMM_1网口发送
 static bool offboard=false;//是否使用机载电脑
 static bool use_uwb=true;//是否使用UWB基站
+static bool set_goal=false;//远程电脑用于设置轨迹规划的目标
+static bool simple_target=true;//仅机载电脑配置：是否为简单目标点
 
 static int socket_cli;
 static int get_drone;
@@ -150,12 +152,37 @@ void mav_send_land(void){
 }
 
 //设置目标。注意：这里输入的目标都是全局坐标系下的目标值
+static mavlink_set_position_target_local_ned_t set_position_target_local_ned;
+static mavlink_message_t msg_position_target_local_ned;
 void mav_send_target(float target_pos_x, float target_pos_y, float target_pos_z, //单位：m
                     float target_vel_x, float target_vel_y, float target_vel_z,  //单位：m/s
                     float target_acc_x, float target_acc_y, float target_acc_z,  //单位：m/ss
                     float target_yaw, float target_yaw_rate){                    //单位：rad, rad/s
-  mavlink_set_position_target_local_ned_t set_position_target_local_ned;
-  mavlink_message_t msg_position_target_local_ned;
+  if(set_goal){
+    if(fabs(set_position_target_local_ned.x-target_pos_x)<0.1&&
+       fabs(set_position_target_local_ned.y-target_pos_y)<0.1){
+        return;
+    }
+    if(target_pos_z!=0.0f){
+      set_position_target_local_ned.coordinate_frame=MAV_FRAME_MISSION;
+      printf("set_goal\n");
+    }else{//只有起飞时刻target_pos_z==0.0f
+      set_position_target_local_ned.coordinate_frame=MAV_FRAME_GLOBAL;
+      printf("init_goal\n");
+    }
+  }else{
+    if(offboard){
+      if(fabs(set_position_target_local_ned.x-target_pos_x)<0.001&&
+         fabs(set_position_target_local_ned.y-target_pos_y)<0.001){
+        return;
+      }
+    }
+    if(simple_target){
+      set_position_target_local_ned.coordinate_frame=MAV_FRAME_GLOBAL;
+    }else{
+      set_position_target_local_ned.coordinate_frame=MAV_FRAME_VISION_NED;
+    }
+  }
   set_position_target_local_ned.x=target_pos_x;
   set_position_target_local_ned.y=target_pos_y;
   set_position_target_local_ned.z=target_pos_z;

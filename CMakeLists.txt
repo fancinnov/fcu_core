@@ -21,6 +21,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
   image_transport
   tf
   serial
+  quadrotor_msgs
 )
 
 generate_messages(
@@ -36,6 +37,7 @@ catkin_package(
   rospy
   std_msgs
   serial
+  quadrotor_msgs
 )
 
 include_directories(
