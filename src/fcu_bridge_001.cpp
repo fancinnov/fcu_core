@@ -167,7 +167,7 @@ void mav_send_target(float target_pos_x, float target_pos_y, float target_pos_z,
        fabs(set_position_target_local_ned.y-target_pos_y)<0.1){
         return;
     }
-    if(target_pos_z!=0.0f){
+    if(target_pos_z>0.0f){
       set_position_target_local_ned.coordinate_frame=MAV_FRAME_MISSION;
       printf("set_goal\n");
     }else{//只有起飞时刻target_pos_z==0.0f

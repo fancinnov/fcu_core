@@ -82,6 +82,7 @@ void execute_mission_001(void){
 
     px1=px;
     py1=py;
+    pz1=0.6;
 
     px2=1.0*cosf(theta+M_PI*2/6)+2;
     py2=1.0*sinf(theta+M_PI*2/6)+2;
@@ -128,7 +129,7 @@ void execute_mission_001(void){
         case 3:
             px=2.0;
             py=2.0;
-            pz=0.5;
+            pz=1.0;
 
             px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pz;
             px2=pos_takeoff_002_x+px; py2=pos_takeoff_002_y+py; pz2=pz;
@@ -370,6 +371,9 @@ int main(int argc, char **argv) {
     q.setRPY(M_PI, 0, 0);
     transform.setRotation(q);
     br.sendTransform(tf::StampedTransform(transform,  ros::Time::now(), "map", "uwb"));
+    q.setRPY(0, 0, 0);
+    transform.setRotation(q);
+    br.sendTransform(tf::StampedTransform(transform,  ros::Time::now(), "map", "world"));
     if(!get_pos_cmd){
       execute_mission_001();
       execute_mission_002();
