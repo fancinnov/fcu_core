@@ -24,7 +24,7 @@
 #define BUF_SIZE 32768//数据缓存区大小
 #define BAUDRATE 460800 //虚拟串口波特率
 #define DRONE_PORT 333 //port
-static char* DRONE_IP = "192.168.0.201"; //ip
+static char* DRONE_IP = "192.168.4.1"; //ip
 static char* USB_PORT = "/dev/ttyACM0"; //usb虚拟串口文件描述符
 static mavlink_channel_t mav_chan=MAVLINK_COMM_1;//MAVLINK_COMM_0虚拟串口发送，MAVLINK_COMM_1网口发送
 static bool offboard=false;//是否使用机载电脑
@@ -58,6 +58,7 @@ ros::Publisher odom_global;
 ros::Subscriber odom;
 ros::Subscriber cmd;
 ros::Subscriber mission;
+ros::Subscriber motion;
 ros::Publisher path_global;
 ros::Publisher goal;
 
@@ -324,7 +325,7 @@ void odomHandler(const nav_msgs::Odometry::ConstPtr& odom)
 	if(time_odom<=time_start||mav_chan == MAVLINK_COMM_0){//USB传输无需降频
 		time_odom=ros::Time::now().toSec();
 	}else{
-		if(ros::Time::now().toSec()-time_odom<0.05){//用网络通信，如果odom频率过高进行降频，降至20hz以下
+		if(ros::Time::now().toSec()-time_odom<0.1){//用网络通信，如果odom频率过高进行降频，降至10hz以下
 			return;
 		}
 		time_odom=ros::Time::now().toSec();
@@ -351,6 +352,42 @@ void odomHandler(const nav_msgs::Odometry::ConstPtr& odom)
   local_position_ned_cov.x=position_map.x();
   local_position_ned_cov.y=position_map.y();
   local_position_ned_cov.z=position_map.z();
+  mavlink_msg_local_position_ned_cov_encode(mavlink_system.sysid, mavlink_system.compid, &msg_local_position_ned_cov, &local_position_ned_cov);
+  mavlink_send_msg(mav_chan, &msg_local_position_ned_cov);
+}
+
+void motionHandler(const geometry_msgs::PoseStamped::ConstPtr& odom)
+{
+	if(time_odom<=time_start||mav_chan == MAVLINK_COMM_0){//USB传输无需降频
+		time_odom=ros::Time::now().toSec();
+	}else{
+		if(ros::Time::now().toSec()-time_odom<0.1){//用网络通信，如果odom频率过高进行降频，降至10hz以下
+			return;
+		}
+		time_odom=ros::Time::now().toSec();
+	}
+
+  Eigen::Vector3f position_map ((float)odom->pose.position.x, (float)odom->pose.position.y, (float)odom->pose.position.z) ;
+  float quaternion_odom[4]={(float)odom->pose.orientation.w,
+                            (float)odom->pose.orientation.x,
+                            (float)odom->pose.orientation.y,
+                            (float)odom->pose.orientation.z};
+
+  float roll, pitch, yaw;
+  mavlink_quaternion_to_euler(quaternion_odom, &roll, &pitch, &yaw);
+  printf("x:%f,y:%f,z:%f,yaw:%f\n",position_map.x(),position_map.y(),position_map.z(),yaw);
+  //动捕一般为前左上坐标系，需要改为前右下坐标系发给飞控
+  mavlink_message_t msg_local_position_ned_cov, msg_attitude;
+  mavlink_attitude_t attitude;
+  mavlink_local_position_ned_cov_t local_position_ned_cov;
+
+  attitude.yaw = -yaw;
+  mavlink_msg_attitude_encode(mavlink_system.sysid, mavlink_system.compid, &msg_attitude, &attitude);
+  mavlink_send_msg(mav_chan, &msg_attitude);
+
+  local_position_ned_cov.x=position_map.x();
+  local_position_ned_cov.y=-position_map.y();
+  local_position_ned_cov.z=-position_map.z();
   mavlink_msg_local_position_ned_cov_encode(mavlink_system.sysid, mavlink_system.compid, &msg_local_position_ned_cov, &local_position_ned_cov);
   mavlink_send_msg(mav_chan, &msg_local_position_ned_cov);
 }
@@ -415,6 +452,7 @@ int main(int argc, char **argv) {
   mission=nh.subscribe<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_001", 100, missionHandler);
   path_global = nh.advertise<nav_msgs::Path>("/path_global_001", 100);
   goal=nh.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 100);
+  motion=nh.subscribe<geometry_msgs::PoseStamped>("/motion_001", 100, motionHandler);
 
   rbInit(&mav_buf_send, TxBuffer, BUF_SIZE);
 	rbInit(&mav_buf_receive, RxBuffer, BUF_SIZE);
