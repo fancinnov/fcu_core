@@ -224,7 +224,7 @@ void parse_data(void){
 					//printf("Received \n");
 					switch (msg_received.msgid) {
 						case MAVLINK_MSG_ID_HEARTBEAT:
-						printf("006 Received heartbeat time: %fs, voltage:%fV, current:%fA\n", ros::Time::now().toSec()-time_start, (double)batt.voltages[1]/1000, (double)batt.current_battery/100);
+						printf("006 Received heartbeat time: %fs, voltage:%fV, current:%fA, sat:%d, gnss:%d\n", ros::Time::now().toSec()-time_start, (double)batt.voltages[1]/1000, (double)batt.current_battery/100, position.hdg&0xFF, position.hdg>>12);
 							// mavlink_msg_heartbeat_decode(&msg_received, &heartbeat);
 							mav_send_heartbeat();
 							break;
@@ -431,11 +431,11 @@ int main(int argc, char **argv) {
   gnss_global = nh.advertise<sensor_msgs::NavSatFix>("gnss_global_006",100);
   imu_global = nh.advertise<sensor_msgs::Imu>("imu_global_006",100);
   odom_global = nh.advertise<nav_msgs::Odometry>("odom_global_006",100);
-  odom=nh.subscribe<nav_msgs::Odometry>("/vins_estimator/odometry_006", 100, odomHandler);
-  cmd=nh.subscribe<std_msgs::Int16>("/fcu_bridge/command", 100, cmdHandler);
-  mission=nh.subscribe<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_006", 100, missionHandler);
+  odom=nh.subscribe<nav_msgs::Odometry>("/vins_estimator/odometry_006", 100, odomHandler, ros::TransportHints().tcpNoDelay());
+  cmd=nh.subscribe<std_msgs::Int16>("/fcu_bridge/command", 100, cmdHandler, ros::TransportHints().tcpNoDelay());
+  mission=nh.subscribe<geometry_msgs::InertiaStamped>("/fcu_bridge/mission_006", 100, missionHandler, ros::TransportHints().tcpNoDelay());
   path_global = nh.advertise<nav_msgs::Path>("/path_global_006", 100);
-  motion=nh.subscribe<geometry_msgs::PoseStamped>("/motion_006", 100, motionHandler);
+  motion=nh.subscribe<geometry_msgs::PoseStamped>("/motion_006", 100, motionHandler, ros::TransportHints().tcpNoDelay());
 
   rbInit(&mav_buf_send, TxBuffer, BUF_SIZE);
 	rbInit(&mav_buf_receive, RxBuffer, BUF_SIZE);
