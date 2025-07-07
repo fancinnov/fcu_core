@@ -101,8 +101,8 @@ void execute_mission_001(void){
   }else{
       switch(enable_pos){
         case 1:
-            px=2.0;
-            py=2.0;
+            px=1.0;
+            py=1.0;
             pz=1.0;
 
             px1=pos_takeoff_001_x+px; py1=pos_takeoff_001_y+py; pz1=pz;

@@ -272,6 +272,9 @@ void parse_data(void){
 							odom_pub.pose.pose.position.x=pose.x*0.01;
 							odom_pub.pose.pose.position.y=pose.y*0.01;
 							odom_pub.pose.pose.position.z=-pose.z*0.01;
+              odom_pub.twist.twist.linear.x=position.vx*0.01;
+              odom_pub.twist.twist.linear.y=position.vy*0.01;
+              odom_pub.twist.twist.linear.z=-position.vz*0.01;
 							if(use_uwb&&(position.lat==0||position.lon==0)){
 								break;
 							}
